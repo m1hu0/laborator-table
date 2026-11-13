@@ -373,6 +373,9 @@ ul.tight li::marker{color:var(--brass)}
 /* ---------- ecran complet ---------- */
 .fsbtn{width:38px;padding:0}
 .urpair{display:inline-flex}
+.hintbtn{gap:6px;padding:0 12px}
+.hintbtn svg{width:18px;height:18px;flex:none}
+.hintbtn span{font-variant-numeric:tabular-nums}
 .urpair .ur{width:44px;padding:0}
 .urpair .ur svg{width:20px;height:20px;flex:none}
 .urpair .ur:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
@@ -838,6 +841,7 @@ function drawBoard(svg,pos,opt={}){
       for(let k=0;k<c;k++){const s=slot(n,k,c);
         const top=k===c-1,sel=top&&who==="you"&&opt.selected===n;
         if(sel){el("circle",{cx:s.x,cy:s.y,r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);}
+        if(top&&who==="you"&&(opt.hintFrom||[]).includes(n))el("circle",{class:"hintring",cx:s.x,cy:s.y,r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
         checker(svg,id,s.x,s.y,who);
       }
       if(c>5){const s=slot(n,c-1,c);const tx=el("text",{x:s.x,y:s.y+4.5,"text-anchor":"middle","font-size":"13","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:who==="you"?"#4a3d27":"#efe7d4"},svg);tx.textContent=c;}
@@ -861,6 +865,7 @@ function drawBoard(svg,pos,opt={}){
   const bx=X0+HALF+BARW/2;
   for(let k=0;k<pos.oBar;k++)checker(svg,id,bx,TOP+54+k*30,"opp",13);
   for(let k=0;k<pos.pBar;k++)checker(svg,id,bx,BOT-54-k*30,"you",13);
+  if(pos.pBar&&(opt.hintFrom||[]).includes(25))el("circle",{class:"hintring",cx:bx,cy:BOT-54-(pos.pBar-1)*30,r:17,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
 }
 
 /* ================= ZARURI ================= */
@@ -1034,7 +1039,7 @@ const SFX=(()=>{let ctx=null,out=null;const buf={};
   };})();
 // sunete pentru tot ce se apasă în aplicație
 document.addEventListener("click",e=>{const t=e.target;if(!t.closest)return;
-  if(t.closest(".fsbtn,.ur"))return t.closest("#jUndo,#qUndo")?SFX.undo():SFX.press();
+  if(t.closest(".fsbtn,.ur,.hintbtn"))return t.closest("#jUndo,#qUndo")?SFX.undo():SFX.press();
   if(t.closest(".btn,.choice"))return SFX.press();
   if(t.closest(".pill,.seg button,.rbtn,nav a,aside a,.lrow,.ghead,.node,.task,.xbtn,.mvrow"))return SFX.select();},true);
 document.addEventListener("change",e=>{if(e.target.matches&&e.target.matches('.toggle input[type="checkbox"]'))SFX.toggle(e.target.checked);},true);
@@ -1059,7 +1064,7 @@ function makeMover(cfg){
     let shown=S.pos;const dragging=S.drag&&S.drag.moved;
     if(dragging){shown=clone(S.pos);if(S.drag.from===25)shown.pBar--;else shown.p[S.drag.from]--;}
     const r=cfg.active()&&S.sel!=null?[...reach(S.sel).keys()]:[];
-    const opt=Object.assign({selected:dragging?null:(S.sel>=1&&S.sel<=24?S.sel:null),selBar:S.sel===25&&!dragging,dests:r.filter(t=>t>=1),zoneTray:r.includes(0),hot:dragging?S.drag.hot:null,last:S.lastMv},extra);
+    const opt=Object.assign({selected:dragging?null:(S.sel>=1&&S.sel<=24?S.sel:null),selBar:S.sel===25&&!dragging,dests:r.filter(t=>t>=1),zoneTray:r.includes(0),hot:dragging?S.drag.hot:null,last:S.lastMv},cfg.extra?cfg.extra():{},extra);
     drawBoard(svg(),shown,opt);
     if(dragging)S.drag.ghost=checker(svg(),cfg.svg,0,0,"you",R+1.5,{style:"pointer-events:none",transform:`translate(${S.drag.x},${S.drag.y})`});}
   function anim(pos,moves,cb){animateMoves(svg(),pos,moves,{},cb);}
@@ -1841,13 +1846,30 @@ function renderJ(){
   const ctl=jEl("jCtl");const d=G.dice;
   const d3=S.dice3d!==false&&DICE3D.available();jEl("jDice").classList.toggle("big",!d3);jEl("jDice").classList.toggle("mini",d3);
   jEl("jDice").innerHTML=d?diceHTML(d.length===4?[d[0],d[0]]:d,[],G.justRolled&&!d3):"";G.justRolled=false;
-  if(G.phase==="move")ctl.innerHTML=`<div class="urpair" role="group" aria-label="Mutări"><button class="btn ghost small ur" id="jUndo" type="button" aria-label="Înapoi" title="Înapoi (Ctrl+Z)"${G.steps.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="btn ghost small ur" id="jRedo" type="button" aria-label="Refă" title="Refă (Ctrl+Y)"${G.redo&&G.redo.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></div>${S.autoOk!==false?"":`<button class="btn green small" id="jOk" type="button" ${G.steps.length===G.max?"":"disabled"}>Confirmă</button>`}`;
+  if(G.hint&&G.hint.at!==G.steps.length)G.hint=null;
+  if(G.phase==="move")ctl.innerHTML=`${hintBtn()}<div class="urpair" role="group" aria-label="Mutări"><button class="btn ghost small ur" id="jUndo" type="button" aria-label="Înapoi" title="Înapoi (Ctrl+Z)"${G.steps.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="btn ghost small ur" id="jRedo" type="button" aria-label="Refă" title="Refă (Ctrl+Y)"${G.redo&&G.redo.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></div>${S.autoOk!==false?"":`<button class="btn green small" id="jOk" type="button" ${G.steps.length===G.max?"":"disabled"}>Confirmă</button>`}`;
   else ctl.innerHTML=`<span class="hint">${G.phase==="bot"?"Botul se gândește…":""}</span>`;
+  const hb=jEl("jHint");if(hb)hb.addEventListener("click",useHint);
   const u=jEl("jUndo");if(u)u.addEventListener("click",()=>JM.undo());
   const r=jEl("jRedo");if(r)r.addEventListener("click",()=>JM.redo());
   const ok=jEl("jOk");if(ok)ok.addEventListener("click",confirmMove);
 }
 function jBoardDraw(extra={}){JM.draw(extra);}
+const BULB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
+function hintBtn(){const ok=GNU.status()==="ready",dis=!ok||(G.hints<=0&&!G.turnHinted),t=ok?`Hint (${G.hints} rămase)`:"Hint indisponibil";
+  return `<button class="btn ghost small hintbtn" id="jHint" type="button" aria-label="${t}" title="${t}"${dis?" disabled":""}>${BULB}<span>${G.hints}</span></button>`;}
+function hintOpt(){const h=G.hint;if(!h||h.at!==G.steps.length)return{};const o={hintFrom:[...new Set(h.rest.map(m=>m[0]))]};
+  if(h.level===2&&G.sel==null){o.dests=[...new Set(h.rest.map(m=>m[1]).filter(t=>t>=1&&t<=24))];if(h.rest.some(m=>m[1]===0))o.zoneTray=true;}
+  return o;}
+async function useHint(){if(G.phase!=="move"||G.anim||G.hintBusy||GNU.status()!=="ready"||(G.hints<=0&&!G.turnHinted))return;
+  G.hintBusy=true;let r=null;try{r=await hintFor();}finally{G.hintBusy=false;}
+  if(G.phase!=="move")return;
+  if(!r){setStatus("Hint indisponibil acum.");return;}
+  if(!G.turnHinted){G.hints--;G.turnHinted=true;}
+  const level=G.hint&&G.hint.at===G.steps.length?2:1;
+  G.hint={level,at:G.steps.length,rest:r.rest,not:r.not,reset:r.reset};
+  setStatus(r.reset?`Ce ai mutat nu duce la o mutare bună. Dă Înapoi. Cea mai bună era <b>${r.not}</b>.`:level===1?"Mută piesele luminate. Apasă din nou pentru mutarea întreagă.":`Cea mai bună: <b>${r.not}</b>`);
+  renderJ();jBoardDraw();}
 async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";
   const d3=S.dice3d!==false&&DICE3D.available();let a,b;
   if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:["Tu"],text:S.autoRoll===true?"":"Aruncă zarul tău"});
@@ -1868,7 +1890,7 @@ function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:
     G.hist.push({who:"you",dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();setTimeout(()=>botTurn(),1400);return;}
   G.phase="move";renderJ();jBoardDraw();
   setStatus(G.pos.pBar?"Ești pe bară: intră întâi cu piesa de pe bară.":"Rândul tău.");}
-const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,
+const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,extra:hintOpt,
   onComplete:()=>{if(S.autoOk!==false)setTimeout(()=>{if(G.phase==="move"&&G.steps.length===G.max&&!G.anim)confirmMove();},280);}});
 function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
   const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;const x0=ENG.canonFor(G.turnStart,"you");
@@ -1991,7 +2013,7 @@ async function hintFor(){const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;
   return{rest:top.sq,full:top.sq,not:fmtSeq(x0,top.sq),reset:k>0};}
 const CLS_EQ=[.1,1,3,6,12,999]; // praguri în equity×100 pentru: cea mai bună, excelentă, bună, imprecizie, greșeală, gafă
 function classifyEq(loss,n){if(n<=1)return FORCED;return CLS[CLS_EQ.findIndex(t=>loss<=t)];}
-function renderGnuStatus(){const el=document.getElementById("gnuChip");if(!el)return;const st=GNU.status();
+function renderGnuStatus(){if(typeof G!=="undefined"&&G.phase==="move")renderJ();const el=document.getElementById("gnuChip");if(!el)return;const st=GNU.status();
   el.className="chip "+(st==="ready"?"win":st==="fail"?"":"gold");el.textContent=st==="ready"?"Motor GNU activ":st==="loading"?"Se încarcă motorul GNU…":st==="fail"?"Motor GNU indisponibil (folosesc botul simplu)":"";}
 
 /* ================= RAPORT ================= */
