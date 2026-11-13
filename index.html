@@ -373,6 +373,8 @@ ul.tight li::marker{color:var(--brass)}
 /* ---------- ecran complet ---------- */
 .fsbtn{width:38px;padding:0}
 .urpair{display:inline-flex}
+@keyframes land{0%{transform:scale(1.1,.88)}60%{transform:scale(.97,1.03)}100%{transform:none}}
+.ck.land{transform-box:fill-box;transform-origin:50% 80%;animation:land .14s ease-out}
 .hintbtn{gap:6px;padding:0 12px}
 .hintbtn svg{width:18px;height:18px;flex:none}
 .hintbtn span{font-variant-numeric:tabular-nums}
@@ -839,7 +841,7 @@ function drawBoard(svg,pos,opt={}){
         const top=k===c-1,sel=top&&who==="you"&&opt.selected===n;
         if(sel){el("circle",{cx:s.x,cy:s.y-6,r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);}
         if(top&&who==="you"&&(opt.hintFrom||[]).includes(n))el("circle",{class:"hintring",cx:s.x,cy:s.y,r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
-        checker(svg,id,s.x,s.y,who,R-.5,{},sel?6:0);
+        checker(svg,id,s.x,s.y,who,R-.5,top&&(opt.land||[]).includes(n)?{class:"ck land"}:{},sel?6:0);
       }
       if(c>5){const s=slot(n,c-1,c);const tx=el("text",{x:s.x,y:s.y+4.5,"text-anchor":"middle","font-size":"13","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:who==="you"?"#4a3d27":"#efe7d4"},svg);tx.textContent=c;}
     });
@@ -889,20 +891,20 @@ function demoFinal(svg,not,roll){const segs=parse(not);drawBoard(svg,applySegs(S
 function runDemo(svg,not,roll,onDone){
   const tok=(svg._tok||0)+1;svg._tok=tok;
   if(reduce){demoFinal(svg,not,roll);onDone&&onDone();return;}
-  const hops=demoHops(not,roll);let pos=clone(START);let i=0;
+  const hops=demoHops(not,roll);let pos=clone(START);let i=0,land=null;
   drawBoard(svg,pos,{});
   const next=()=>{if(svg._tok!==tok)return;
     if(i>=hops.length){demoFinal(svg,not,roll);onDone&&onDone();return;}
     const h=hops[i++];
     const a=slot(h.from,pos.p[h.from]-1,pos.p[h.from]),b=slot(h.to,pos.p[h.to],pos.p[h.to]+1);
     const base=clone(pos);base.p[h.from]--;
-    drawBoard(svg,base,{dests:[h.to]});
-    const g=checker(svg,svg.id,0,0,"you",R+1.5);const dd=miniDie(svg,0,0,h.die,22);
+    drawBoard(svg,base,{dests:[h.to],land:land!=null?[land]:[]});land=null;
+    const g=checker(svg,svg.id,0,0,"you",R+1.5,{},9);const dd=miniDie(svg,0,0,h.die,22);
     const t0=performance.now(),dur=620;
     const step=now=>{if(svg._tok!==tok)return;const k=Math.min(1,(now-t0)/dur),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
       const x=a.x+(b.x-a.x)*e,y=a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*34;
       g.setAttribute("transform",`translate(${x},${y})`);dd.setAttribute("transform",`translate(${x+24},${y-24})`);
-      if(k<1)requestAnimationFrame(step);else{pos.p[h.from]--;pos.p[h.to]++;SFX.place();setTimeout(next,260);}};
+      if(k<1)requestAnimationFrame(step);else{pos.p[h.from]--;pos.p[h.to]++;land=h.to;SFX.place();g.remove();dd.remove();drawBoard(svg,pos,{land:[land]});land=null;setTimeout(next,260);}};
     requestAnimationFrame(step);};
   setTimeout(next,450);
 }
@@ -1062,11 +1064,11 @@ function makeMover(cfg){
     let shown=S.pos;const dragging=S.drag&&S.drag.moved;
     if(dragging){shown=clone(S.pos);if(S.drag.from===25)shown.pBar--;else shown.p[S.drag.from]--;}
     const r=cfg.active()&&S.sel!=null?[...reach(S.sel).keys()]:[];
-    const opt=Object.assign({selected:dragging?null:(S.sel>=1&&S.sel<=24?S.sel:null),selBar:S.sel===25&&!dragging,dests:r.filter(t=>t>=1),zoneTray:r.includes(0),hot:dragging?S.drag.hot:null,last:S.lastMv},cfg.extra?cfg.extra():{},extra);
+    const opt=Object.assign({selected:dragging?null:(S.sel>=1&&S.sel<=24?S.sel:null),selBar:S.sel===25&&!dragging,dests:r.filter(t=>t>=1),zoneTray:r.includes(0),hot:dragging?S.drag.hot:null,last:S.lastMv,land:S.lastLand!=null?[S.lastLand]:[]},cfg.extra?cfg.extra():{},extra);S.lastLand=null;
     drawBoard(svg(),shown,opt);
-    if(dragging)S.drag.ghost=checker(svg(),cfg.svg,0,0,"you",R+1.5,{style:"pointer-events:none",transform:`translate(${S.drag.x},${S.drag.y})`});}
+    if(dragging)S.drag.ghost=checker(svg(),cfg.svg,0,0,"you",R+1.5,{style:"pointer-events:none",transform:`translate(${S.drag.x},${S.drag.y})`},9);}
   function anim(pos,moves,cb){animateMoves(svg(),pos,moves,{},cb);}
-  function doStep(from,to,animate){const chain=reach(from).get(to);if(!chain)return false;S.lastMv=null;S.redo=[];
+  function doStep(from,to,animate){const chain=reach(from).get(to);if(!chain)return false;S.lastMv=null;S.redo=[];S.lastLand=to>=1&&to<=24?to:null;
     chain.forEach(m=>S.steps.push(m));const am=chain.map(m=>["y",m[0],m[1],m[2]]);
     const fin=p=>{S.pos=p;S.sel=null;if(S.steps.length<S.max&&to>=1&&next().some(x=>x[0]===to))S.sel=to;S.anim=false;draw();cfg.onChange&&cfg.onChange();
       if(S.steps.length===S.max&&cfg.onComplete)cfg.onComplete();};
@@ -1294,21 +1296,21 @@ function animateMoves(svg,pos,moves,opt,done){
   const tok=(svg._tok||0)+1;svg._tok=tok;
   const finalPos=moves.reduce(applyMove,pos);
   const who=w=>w==="y"?"you":"opp";
-  const fin=()=>{drawBoard(svg,finalPos,opt);done&&done(finalPos);};
+  const fin=()=>{drawBoard(svg,finalPos,land!=null?Object.assign({},opt,{land:[land]}):opt);done&&done(finalPos);};
   if(reduce||!moves.length){fin();return;}
-  let cur=pos,i=0;drawBoard(svg,cur,opt);
+  let cur=pos,i=0,land=null;drawBoard(svg,cur,opt);
   const next=()=>{if(svg._tok!==tok)return;if(i>=moves.length){fin();return;}
     const m=moves[i++],[w,f,t,d]=m;
     const a=coordFrom(cur,w,f);const base=clone(cur);
     if(w==="y"){if(f===25)base.pBar--;else base.p[f]--;}else{if(f===0)base.oBar--;else base.o[f]--;}
     const b=coordTo(base,w,t);
-    drawBoard(svg,base,Object.assign({},opt,{dests:w==="y"&&t>=1&&t<=24&&base.o[t]<2?[t]:[]}));
-    const g=checker(svg,svg.id,0,0,w==="y"?"you":"opp",R+1.5);const dd=d?miniDie(svg,0,0,d,22):null;
+    drawBoard(svg,base,Object.assign({},opt,{dests:w==="y"&&t>=1&&t<=24&&base.o[t]<2?[t]:[],land:land!=null?[land]:[]}));land=null;
+    const g=checker(svg,svg.id,0,0,w==="y"?"you":"opp",R+1.5,{},9);const dd=d?miniDie(svg,0,0,d,22):null;
     const t0=performance.now(),dur=290;
     const st=now=>{if(svg._tok!==tok)return;const k=Math.min(1,(now-t0)/dur),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
       const x=a.x+(b.x-a.x)*e,y=a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*34;g.setAttribute("transform",`translate(${x},${y})`);if(dd)dd.setAttribute("transform",`translate(${x+24},${y-24})`);
       if(k<1){requestAnimationFrame(st);return;}
-      const nx=applyMove(cur,m);
+      const nx=applyMove(cur,m);if(t>=1&&t<=24)land=t;
       const hit=(w==="y"&&t>=1&&t<=24&&cur.o[t]===1)||(w==="o"&&t>=1&&t<=24&&cur.p[t]===1);
       if(hit)SFX.hit();else if((w==="y"&&t===0)||(w==="o"&&t===25))SFX.off();else SFX.place();
       if(hit){const tmp=clone(nx);if(w==="y")tmp.oBar--;else tmp.pBar--;
