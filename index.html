@@ -1608,7 +1608,9 @@ function decodeDiceGeo(d){const b64=s=>{const bin=atob(s);const u=new Uint8Array
   if(d.u){const u=new Uint16Array(b64(d.u)),U=new Float32Array(u.length);for(let i=0;i<u.length;i++)U[i]=u[i]/65535;g.setAttribute("uv",new THREE.BufferAttribute(U,2));}
   g.setIndex(new THREE.BufferAttribute(idx,1));return g;}
 const DICE3D=(()=>{
-  const ok=()=>!!(window.THREE&&window.CANNON)&&(()=>{try{const c=document.createElement("canvas");return !!(c.getContext("webgl")||c.getContext("experimental-webgl"));}catch(e){return false;}})();
+  let okCache=null,lost=false,lostCount=0;
+  const ok=()=>{if(okCache===null){okCache=false;try{if(window.THREE&&window.CANNON){const c=document.createElement("canvas"),g=c.getContext("webgl")||c.getContext("experimental-webgl");
+    if(g){okCache=true;const x=g.getExtension("WEBGL_lose_context");if(x)x.loseContext();}}}catch(e){}}return okCache&&!lost;};
   const S_=.32,H=S_/2; // latura zarului (unități 3D) — o piesă are ~0,86
   let built=false,renderer,scene,camera,world,host,wrap,cv,hint,raf=0,last=0,mDieMat,wallBodies=[],mWall;
   const B={x0:-4.2,x1:4.2,z0:-3.1,z1:3.1};
@@ -1628,7 +1630,12 @@ const DICE3D=(()=>{
     host=document.createElement("div");host.className="dthrow";host.hidden=true;
     host.innerHTML=`<canvas aria-label="Zona de aruncare a zarurilor"></canvas><div class="dthint"></div>`;
     wrap.appendChild(host);cv=host.querySelector("canvas");hint=host.querySelector(".dthint");
-    renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));
+    renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
+    // contextul pierdut nu revine pe telefon: aruncăm canvasul, aruncarea în curs se termină cu zaruri simple,
+    // iar următoarea aruncare își face un canvas nou; după două pierderi rămânem pe zaruri 2D
+    cv.addEventListener("webglcontextlost",e=>{e.preventDefault();cancelAnimationFrame(raf);raf=0;state="idle";hold=null;
+      const f=resolveFn,n=dice.filter(d=>d.active).length||2;resolveFn=null;host.remove();built=false;dice=[];wallBodies=[];lostCount++;lost=lostCount>=2;
+      if(f)f(Array.from({length:n},rollDie));});renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));
     renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.NoToneMapping;
     renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;
     scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(38,1.3,.1,100);
@@ -1692,7 +1699,7 @@ const DICE3D=(()=>{
     if(opts.keep){setTimeout(()=>{host.classList.add("passive");state="kept";res();},opts.side==="bot"?120:220);return;}
     setTimeout(()=>{host.classList.add("out");setTimeout(()=>{host.hidden=true;host.classList.remove("out");cancelAnimationFrame(raf);raf=0;state="idle";res();},200);},opts.side==="bot"?250:450);}
   let clrT=0;function clear(){if(!built||host.hidden)return;host.classList.add("out");clearTimeout(clrT);clrT=setTimeout(()=>{host.hidden=true;host.classList.remove("out","passive");if(state==="kept")state="idle";},200);}
-  function throwDice(o){if(!built)build();clearTimeout(clrT);opts=o;host.classList.remove("passive","out");host.hidden=false;size();
+  function throwDice(o){if(lost)return Promise.resolve(Array.from({length:(o.slots||[0,1]).length},rollDie));if(!built)build();clearTimeout(clrT);opts=o;host.classList.remove("passive","out");host.hidden=false;size();
     const slots=o.slots||[0,1];const tints=o.tints||(o.side==="bot"?["bot","bot"]:["you","you"]);
     dice.forEach((d,i)=>{const on=slots.includes(i);d.active=on;
       if(on){setTint(i,tints[slots.indexOf(i)]||tints[0]);if(!d.inWorld){world.addBody(d.body);d.inWorld=true;}d.mesh.visible=true;}
@@ -1825,7 +1832,7 @@ function toAnim(seq,who){return seq.map(([s,t,d])=>who==="you"?["y",s,t,d]:["o",
 function jEl(id){return document.getElementById(id);}
 
 function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,{},cb);}
-function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});setEval(.5);
+function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{gameTok:(G.gameTok||0)+1,busy:false,evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});setEval(.5);
   jBoardDraw();renderJ();jEl("jFb").innerHTML="";jEl("jLog").innerHTML="";jEl("jOver").hidden=true;
   setStatus("Aruncați câte un zar. Cine dă mai mare începe.");offerRoll(600);}
 function setStatus(t){jEl("jStatus").innerHTML=t;}
@@ -1864,23 +1871,23 @@ async function useHint(){if(G.phase!=="move"||G.anim||G.hintBusy||GNU.status()!=
   setStatus(r.reset?`Ce ai mutat nu duce la o mutare bună. Dă Înapoi până la început. Cea mai bună: <b>${r.not}</b>.`:level===1?"Mută piesele luminate. Apasă din nou pentru mutarea întreagă.":`${r.best?"Cea mai bună":"Bună de aici"}: <b>${r.not}</b>`);
   renderJ();if(!G.anim)jBoardDraw();}
 async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";
-  const d3=S.dice3d!==false&&DICE3D.available();let a,b;
-  if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:["Tu"],text:S.autoRoll===true?"":"Aruncă zarul tău"});
+  const tok=G.gameTok,d3=S.dice3d!==false&&DICE3D.available();let a,b;
+  if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:["Tu"],text:S.autoRoll===true?"":"Aruncă zarul tău"});if(tok!==G.gameTok)return;
     setStatus(`Ai dat <b>${a}</b>. Acum aruncă botul…`);
-    [b]=await DICE3D.throwDice({keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});
+    [b]=await DICE3D.throwDice({keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
     setTimeout(()=>DICE3D.clear(),a===b?700:1100);}
-  else{SFX.roll();a=rollDie();await new Promise(r=>setTimeout(r,250));b=rollDie();}
+  else{SFX.roll();a=rollDie();await new Promise(r=>setTimeout(r,250));b=rollDie();if(tok!==G.gameTok)return;}
   G.busy=false;renderJ();
   jEl("jDice").innerHTML=`<span class="oroll"><small>Tu</small>${dieSVG(a,"roll")}</span><span class="oroll"><small>Bot</small>${dieSVG(b,"roll")}</span>`;
   if(a===b){setStatus(`Egalitate (${a}-${b}). Mai aruncați o dată.`);offerRoll(1100);return;}
   G.phase="wait";jEl("jCtl").innerHTML="";
-  setTimeout(()=>{if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
+  setTimeout(()=>{if(tok!==G.gameTok)return;if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
     else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},450);}
-async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const d=await rollPair({side:"you",auto:S.autoRoll===true});G.busy=false;startYourTurn(d);}
+async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const tok=G.gameTok;const d=await rollPair({side:"you",auto:S.autoRoll===true});if(tok!==G.gameTok)return;G.busy=false;startYourTurn(d);}
 function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;G.turnHinted=false;G.hint=null;
   const max=JM.begin(G.pos,d[0],d[1]);
   if(max===0){G.phase="wait";renderJ();setStatus(`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
-    G.hist.push({who:"you",dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();setTimeout(()=>botTurn(),1400);return;}
+    G.hist.push({who:"you",dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();const tok=G.gameTok;setTimeout(()=>{if(tok===G.gameTok)botTurn();},1400);return;}
   G.phase="move";renderJ();jBoardDraw();
   setStatus(G.pos.pBar?"Ești pe bară: intră întâi cu piesa de pe bară.":"Rândul tău.");}
 const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,extra:hintOpt,
@@ -1910,12 +1917,12 @@ function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
       h.loss=Math.max(0,-me.diff*100);h.cls=classifyEq(h.loss,list.length);h.bestSeq=top.seq;h.bestNot=fmtSeq(x0,top.seq);h.src="gnu";h.eq=me.eq;
       if(h.cls.id==="best")h.loss=0;
       evalShow(me.win,evTok);logRender();if(G.hist[G.hist.length-1]===h||G.hist[G.hist.length-2]===h)showMoveBadge(h);});}
-  setTimeout(()=>botTurn(),250);}
+  const tok=G.gameTok;setTimeout(()=>{if(tok===G.gameTok)botTurn();},250);}
 function showMoveBadge(h){const c=h.cls;
   jEl("jFb").innerHTML=`<div class="mvbadge" style="--c:${c.col}"><span class="mvsym">${c.sym}</span><div><b>${c.ro}</b><span class="mono">${h.not}</span>${h.loss>0.5&&c.id!=="forced"?`<small>Mai bună: <span class="mono">${h.bestNot}</span></small>`:""}</div></div>`;}
-async function botTurn(d){G.turn="bot";G.phase="bot";renderJ();
-  if(!d){d=await rollPair({side:"bot",auto:true});}
-  setTimeout(async()=>{G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;renderJ();
+async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";renderJ();
+  if(!d){d=await rollPair({side:"bot",auto:true});if(tok!==G.gameTok)return;}
+  setTimeout(async()=>{if(tok!==G.gameTok)return;G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;renderJ();
     const x=ENG.canonFor(G.pos,"bot");let seq=null,p=null,pGnu=false;
     if((G.level==="greu"||G.level==="expert")&&GNU.status()==="ready"){setStatus("Botul se gândește (GNU)…");const list=await gnuAnalyze(G.pos,"bot",d[0],d[1]);
       if(list&&list.length){let pick=list[0];if(G.level==="greu"){const ok=list.filter(m=>m.diff>=-.04);pick=ok[rngInt(ok.length)];}
@@ -1924,7 +1931,7 @@ async function botTurn(d){G.turn="bot";G.phase="bot";renderJ();
       if(book){seq=book.best;p=ENG.evalMover(ENG.apply(x,seq));}else{const ch=ENG.choose(x,d[0],d[1],G.level);seq=ch.pick.seq;p=ch.pick.p;}}
     const before=clone(G.pos);const not=fmtSeq(x,seq,true);
     setStatus(seq.length?`Botul are ${d[0]}-${d[1]}: <span class="mono">${not}</span>`:`Botul are ${d[0]}-${d[1]} și nu poate muta.`);
-    const fin=()=>{DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});if(pGnu){++G.evalTok;setEval(1-p);}else evalAfter(before,"bot",d,ENG.key(ENG.apply(x,seq)),p);logRender();
+    const fin=()=>{if(tok!==G.gameTok)return;DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});if(pGnu){++G.evalTok;setEval(1-p);}else evalAfter(before,"bot",d,ENG.key(ENG.apply(x,seq)),p);logRender();
       if(checkOver())return;G.phase="roll";G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
     if(seq.length)setTimeout(()=>animJ(G.pos,toAnim(seq,"bot"),fin),150);else setTimeout(fin,700);
   },150);}
