@@ -538,7 +538,9 @@ body.fsOn .fsbtn .ex{display:block}
       <div class="field"><label class="toggle"><input type="checkbox" id="jDice3d"> Zaruri 3D, aruncate cu mâna</label>
         <label class="toggle"><input type="checkbox" id="jAuto"> Confirmă automat mutarea</label>
         <label class="toggle"><input type="checkbox" id="jAutoRoll"> Aruncă automat zarurile când e rândul meu</label>
-        <label class="toggle"><input type="checkbox" id="jSound"> Sunete</label></div>
+        <label class="toggle"><input type="checkbox" id="jSound"> Sunete</label>
+        <label class="toggle"><input type="checkbox" id="jMartT"> Marț tehnic: câte 2 piese pe fiecare punct din casă, 3 puncte</label>
+        <label class="toggle"><input type="checkbox" id="jLinieT"> Linie tehnică: câte o piesă pe fiecare punct din casă, 2 puncte</label></div>
       <span class="chip" id="gnuChip"></span>
     </div>
   </details>
@@ -1823,7 +1825,7 @@ function toAnim(seq,who){return seq.map(([s,t,d])=>who==="you"?["y",s,t,d]:["o",
 function jEl(id){return document.getElementById(id);}
 
 function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,{},cb);}
-function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});
+function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});setEval(.5);
   jBoardDraw();renderJ();jEl("jFb").innerHTML="";jEl("jLog").innerHTML="";jEl("jOver").hidden=true;
   setStatus("Aruncați câte un zar. Cine dă mai mare începe.");offerRoll(600);}
 function setStatus(t){jEl("jStatus").innerHTML=t;}
@@ -1926,13 +1928,19 @@ async function botTurn(d){G.turn="bot";G.phase="bot";renderJ();
       if(checkOver())return;G.phase="roll";G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
     if(seq.length)setTimeout(()=>animJ(G.pos,toAnim(seq,"bot"),fin),150);else setTimeout(fin,700);
   },150);}
-function checkOver(){const you=G.pos.pOff===15,bot=G.pos.oOff===15;if(!you&&!bot)return false;
-  let pts=1;if(you){if(G.pos.oOff===0){pts=2;let bg=G.pos.oBar>0;for(let i=1;i<=6;i++)if(G.pos.o[i])bg=true;if(bg)pts=3;}}
+// marț tehnic / linie tehnică: câte 2 (resp. 1) piese pe fiecare punct din casă, restul scoase = câștig pe loc
+function techWin(pos,side){const home=side==="you"?[1,2,3,4,5,6].map(i=>pos.p[i]):[19,20,21,22,23,24].map(i=>pos.o[i]),off=side==="you"?pos.pOff:pos.oOff;
+  if(S.martTehnic===true&&off===3&&home.every(c=>c===2))return{pts:3,kind:"marț tehnic"};
+  if(S.linieTehnica===true&&off===9&&home.every(c=>c===1))return{pts:2,kind:"linie tehnică"};
+  return null;}
+function checkOver(){const tY=techWin(G.pos,"you"),tB=tY?null:techWin(G.pos,"bot"),tech=tY||tB;
+  const you=G.pos.pOff===15||!!tY,bot=G.pos.oOff===15||!!tB;if(!you&&!bot)return false;
+  let pts=1;if(tech)pts=tech.pts;else if(you){if(G.pos.oOff===0){pts=2;let bg=G.pos.oBar>0;for(let i=1;i<=6;i++)if(G.pos.o[i])bg=true;if(bg)pts=3;}}
   else{if(G.pos.pOff===0){pts=2;let bg=G.pos.pBar>0;for(let i=19;i<=24;i++)if(G.pos.p[i])bg=true;if(bg)pts=3;}}
   G.over={win:you,pts};G.phase="over";renderJ();++G.evalTok;setEval(you?1:0);
   const acc=accuracy(G.hist);touchDay();addXP(you?25:10);
   S.games=(S.games||[]).concat([{d:today(),w:you?1:0,pts,acc:acc==null?null:Math.round(acc)}]).slice(-20);save();
-  const kind=pts===3?"backgammon":pts===2?"marț":"simplu";
+  const kind=tech?tech.kind:pts===3?"backgammon":pts===2?"marț":"simplu";
   jEl("jOver").hidden=false;jEl("jOver").innerHTML=`<div class="toast ${you?"ok":"no"}"><h2><span class="badge">${you?ICON.check:ICON.x}</span>${you?"Ai câștigat!":"A câștigat botul"}</h2>
     <p>${you?"Victorie":"Înfrângere"} la ${kind}: ${pts} ${pts===1?"punct":"puncte"}. ${acc!=null?`Precizia ta: <b>${Math.round(acc)}%</b>.`:""}</p>
     <div class="row"><a class="btn gold" href="#raport">Vezi raportul</a><button class="btn ghost" type="button" id="jAgain">Joc nou</button></div></div>`;
@@ -1950,6 +1958,8 @@ function renderLevel(){G.level=S.botLevel||G.level;document.querySelectorAll("#j
   const c=jEl("jDice3d");c.checked=S.dice3d!==false&&DICE3D.available();c.disabled=!DICE3D.available();}
 document.querySelectorAll("#jLevel .pill").forEach(b=>b.addEventListener("click",()=>{S.botLevel=b.dataset.l;save();renderLevel();}));
 jEl("jDice3d").addEventListener("change",e=>{S.dice3d=e.target.checked;save();renderJ();if(!jEl("jTap").hidden||!G.busy){hideTap();offerRoll(100);}});
+jEl("jMartT").checked=S.martTehnic===true;jEl("jMartT").addEventListener("change",e=>{S.martTehnic=e.target.checked;save();});
+jEl("jLinieT").checked=S.linieTehnica===true;jEl("jLinieT").addEventListener("change",e=>{S.linieTehnica=e.target.checked;save();});
 jEl("jSound").checked=S.sound!==false;jEl("jSound").addEventListener("change",e=>{S.sound=e.target.checked;save();});
 jEl("jAutoRoll").checked=S.autoRoll===true;jEl("jAutoRoll").addEventListener("change",e=>{S.autoRoll=e.target.checked;save();if(S.autoRoll)offerRoll();});
 // rândul tău: zarurile apar direct pe tablă. Le atingi (2D) sau le arunci cu mâna (3D); pe automat se aruncă singure.
