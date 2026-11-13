@@ -1087,17 +1087,20 @@ function makeMover(cfg){
   // atingere și tragere
   wrap.style.touchAction="none";
   const pt=e=>svgPt(svg(),e);
+  // la scos: piesa lăsată oriunde în afara câmpurilor de joc iese de pe tablă
+  const offBoard=p=>p.x<X0||p.x>X0+2*HALF+BARW||p.y<TOP||p.y>BOT;
+  const dropAt=(p,from)=>reach(from).has(0)&&offBoard(p)?0:pointAtFull(p.x,p.y);
   const blocked=e=>{const d=e.target.closest&&e.target.closest(".dthrow");return d&&!d.classList.contains("passive");};
   wrap.addEventListener("contextmenu",e=>e.preventDefault());
   wrap.addEventListener("pointerdown",e=>{if(blocked(e)||!cfg.active()||S.anim||e.button>0)return;const p=pt(e);if(!p)return;const n=pointAtFull(p.x,p.y);if(n==null)return;
     S.drag={from:n,can:next().some(m=>m[0]===n),sx:p.x,sy:p.y,x:p.x,y:p.y,moved:false};try{wrap.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
   wrap.addEventListener("pointermove",e=>{const d=S.drag;if(!d||!d.can)return;const p=pt(e);if(!p)return;d.x=p.x;d.y=p.y;
     if(!d.moved&&Math.hypot(p.x-d.sx,p.y-d.sy)>7){d.moved=true;S.sel=d.from;SFX.pick();draw();return;}
-    if(d.moved){const h=pointAtFull(p.x,p.y),hot=h!=null&&reach(d.from).has(h)?h:null;
+    if(d.moved){const h=dropAt(p,d.from),hot=h!=null&&reach(d.from).has(h)?h:null;
       if(hot!==d.hot){d.hot=hot;draw();return;}
       if(d.ghost)d.ghost.setAttribute("transform",`translate(${p.x},${p.y})`);}});
   wrap.addEventListener("pointerup",e=>{const d=S.drag;if(!d)return;S.drag=null;if(!d.moved){tap(d.from);return;}
-    const p=pt(e)||{x:-99,y:-99},to=pointAtFull(p.x,p.y);if(to!=null&&reach(d.from).has(to)){S.sel=d.from;doStep(d.from,to,false);}else{S.sel=null;draw();}});
+    const p=pt(e)||{x:-99,y:-99},to=dropAt(p,d.from);if(to!=null&&reach(d.from).has(to)){S.sel=d.from;doStep(d.from,to,false);}else{S.sel=null;draw();}});
   wrap.addEventListener("pointercancel",()=>{if(S.drag){const was=S.drag.moved;S.drag=null;if(was){S.sel=null;draw();}}});
   return{begin,draw,undo,redo,tap,next,reach,doStep,used,anim};
 }
