@@ -1820,10 +1820,14 @@ function toAnim(seq,who){return seq.map(([s,t,d])=>who==="you"?["y",s,t,d]:["o",
 function jEl(id){return document.getElementById(id);}
 
 function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,{},cb);}
-function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});
+function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});
   jBoardDraw();renderJ();jEl("jFb").innerHTML="";jEl("jLog").innerHTML="";jEl("jOver").hidden=true;
   setStatus("Aruncați câte un zar. Cine dă mai mare începe.");offerRoll(600);}
 function setStatus(t){jEl("jStatus").innerHTML=t;}
+function evalShow(p,tok){if(tok===G.evalTok)setEval(p);}
+function evalAfter(pos,side,d,key,fallback){const tok=++G.evalTok,mine=q=>side==="you"?q:1-q;
+  if(GNU.status()!=="ready"){setEval(mine(fallback));return;}
+  gnuAnalyze(pos,side,d[0],d[1]).then(list=>{const m=list&&list.find(e=>e.key===key);evalShow(mine(m?m.win:fallback),tok);});}
 function setEval(p){G.pYou=p;const pc=Math.round(p*100);jEl("evFill").style.width=pc+"%";jEl("evYou").textContent=pc+"%";jEl("evBot").textContent=(100-pc)+"%";}
 function renderJ(){
   const ctl=jEl("jCtl");const d=G.dice;
@@ -1890,38 +1894,39 @@ function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
   if(G.turnHinted){cls=HINT;loss=0;}
   const h={who:"you",dice:d,before:clone(G.turnStart),seq:G.steps.slice(),cls,loss,bestSeq,not:fmtSeq(x0,G.steps),bestNot:fmtSeq(x0,bestSeq),nOpts:opts.length,hint:G.turnHinted};
   const useGnu=GNU.status()==="ready"&&opts.length>1&&!G.turnHinted;
-  G.hist.push(h);setEval(myP);logRender();
+  G.hist.push(h);logRender();
+  const evTok=useGnu?++G.evalTok:0;if(!useGnu)evalAfter(h.before,"you",d,myKey,myP);
   if(useGnu)jEl("jFb").innerHTML="";else showMoveBadge(h);
   G.phase="wait";renderJ();jBoardDraw();
   if(checkOver())return;
   if(useGnu){h.pending=true;
-    gnuAnalyze(h.before,"you",d[0],d[1]).then(list=>{h.pending=false;if(!list){showMoveBadge(h);return;}
+    gnuAnalyze(h.before,"you",d[0],d[1]).then(list=>{h.pending=false;if(!list){evalShow(myP,evTok);showMoveBadge(h);return;}
       const me=list.find(m=>m.key===myKey)||list[list.length-1];const top=list[0];
       h.loss=Math.max(0,-me.diff*100);h.cls=classifyEq(h.loss,list.length);h.bestSeq=top.seq;h.bestNot=fmtSeq(x0,top.seq);h.src="gnu";h.eq=me.eq;
       if(h.cls.id==="best")h.loss=0;
-      setEval(me.win);logRender();if(G.hist[G.hist.length-1]===h||G.hist[G.hist.length-2]===h)showMoveBadge(h);});}
+      evalShow(me.win,evTok);logRender();if(G.hist[G.hist.length-1]===h||G.hist[G.hist.length-2]===h)showMoveBadge(h);});}
   setTimeout(()=>botTurn(),250);}
 function showMoveBadge(h){const c=h.cls;
   jEl("jFb").innerHTML=`<div class="mvbadge" style="--c:${c.col}"><span class="mvsym">${c.sym}</span><div><b>${c.ro}</b><span class="mono">${h.not}</span>${h.loss>0.5&&c.id!=="forced"?`<small>Mai bună: <span class="mono">${h.bestNot}</span></small>`:""}</div></div>`;}
 async function botTurn(d){G.turn="bot";G.phase="bot";renderJ();
   if(!d){d=await rollPair({side:"bot",auto:true});}
   setTimeout(async()=>{G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;renderJ();
-    const x=ENG.canonFor(G.pos,"bot");let seq=null,p=null;
+    const x=ENG.canonFor(G.pos,"bot");let seq=null,p=null,pGnu=false;
     if((G.level==="greu"||G.level==="expert")&&GNU.status()==="ready"){setStatus("Botul se gândește (GNU)…");const list=await gnuAnalyze(G.pos,"bot",d[0],d[1]);
       if(list&&list.length){let pick=list[0];if(G.level==="greu"){const ok=list.filter(m=>m.diff>=-.04);pick=ok[rngInt(ok.length)];}
-        const legal=ENG.unique(x,ENG.plays(x,d[0],d[1]).seqs).find(o=>ENG.key(o.res)===pick.key);if(legal){seq=legal.seq;p=pick.win;}}}
+        const legal=ENG.unique(x,ENG.plays(x,d[0],d[1]).seqs).find(o=>ENG.key(o.res)===pick.key);if(legal){seq=legal.seq;p=pick.win;pGnu=true;}}}
     if(!seq){const book=(G.level==="incepator"||G.level==="usor")?null:bookSeqs(x,d[0],d[1]);
       if(book){seq=book.best;p=ENG.evalMover(ENG.apply(x,seq));}else{const ch=ENG.choose(x,d[0],d[1],G.level);seq=ch.pick.seq;p=ch.pick.p;}}
     const before=clone(G.pos);const not=fmtSeq(x,seq,true);
     setStatus(seq.length?`Botul are ${d[0]}-${d[1]}: <span class="mono">${not}</span>`:`Botul are ${d[0]}-${d[1]} și nu poate muta.`);
-    const fin=()=>{DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});setEval(1-p);logRender();
+    const fin=()=>{DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});if(pGnu){++G.evalTok;setEval(1-p);}else evalAfter(before,"bot",d,ENG.key(ENG.apply(x,seq)),p);logRender();
       if(checkOver())return;G.phase="roll";G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
     if(seq.length)setTimeout(()=>animJ(G.pos,toAnim(seq,"bot"),fin),150);else setTimeout(fin,700);
   },150);}
 function checkOver(){const you=G.pos.pOff===15,bot=G.pos.oOff===15;if(!you&&!bot)return false;
   let pts=1;if(you){if(G.pos.oOff===0){pts=2;let bg=G.pos.oBar>0;for(let i=1;i<=6;i++)if(G.pos.o[i])bg=true;if(bg)pts=3;}}
   else{if(G.pos.pOff===0){pts=2;let bg=G.pos.pBar>0;for(let i=19;i<=24;i++)if(G.pos.p[i])bg=true;if(bg)pts=3;}}
-  G.over={win:you,pts};G.phase="over";renderJ();setEval(you?1:0);
+  G.over={win:you,pts};G.phase="over";renderJ();++G.evalTok;setEval(you?1:0);
   const acc=accuracy(G.hist);touchDay();addXP(you?25:10);
   S.games=(S.games||[]).concat([{d:today(),w:you?1:0,pts,acc:acc==null?null:Math.round(acc)}]).slice(-20);save();
   const kind=pts===3?"backgammon":pts===2?"marț":"simplu";
