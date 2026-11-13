@@ -1812,6 +1812,7 @@ const CLS=[
  {id:"mist",max:18,ro:"Greșeală",sym:"?",col:"#d9894e"},
  {id:"blun",max:999,ro:"Gafă",sym:"??",col:"#d0555b"}];
 const FORCED={id:"forced",ro:"Forțată",sym:"→",col:"#9aab9f"};
+const HINT={id:"hint",ro:"Cu hint",sym:"H",col:"#c9a55a"};
 function classify(loss,nOpts){if(nOpts<=1)return FORCED;return CLS.find(c=>loss<=c.max);}
 
 /* ================= JOC CONTRA BOTULUI ================= */
@@ -1831,7 +1832,7 @@ function toAnim(seq,who){return seq.map(([s,t,d])=>who==="you"?["y",s,t,d]:["o",
 function jEl(id){return document.getElementById(id);}
 
 function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,{},cb);}
-function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],pYou:.5,over:null,drag:null,anim:false,lastMv:null});
+function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();Object.assign(G,{pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});
   jBoardDraw();renderJ();jEl("jFb").innerHTML="";jEl("jLog").innerHTML="";jEl("jOver").hidden=true;
   setStatus("Aruncați câte un zar. Cine dă mai mare începe.");offerRoll(600);}
 function setStatus(t){jEl("jStatus").innerHTML=t;}
@@ -1861,7 +1862,7 @@ async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").
   setTimeout(()=>{if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
     else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},450);}
 async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const d=await rollPair({side:"you",auto:S.autoRoll===true});G.busy=false;startYourTurn(d);}
-function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;
+function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;G.turnHinted=false;G.hint=null;
   const max=JM.begin(G.pos,d[0],d[1]);
   if(max===0){G.phase="wait";renderJ();setStatus(`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
     G.hist.push({who:"you",dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();setTimeout(()=>botTurn(),1400);return;}
@@ -1880,8 +1881,9 @@ function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
     else{loss=Math.max(loss,6);cls=classify(loss,opts.length);}}
   else cls=classify(loss,opts.length);
   if(myKey===ENG.key(ENG.apply(x0,bestSeq))){cls=opts.length<=1?FORCED:CLS[0];loss=0;}
-  const h={who:"you",dice:d,before:clone(G.turnStart),seq:G.steps.slice(),cls,loss,bestSeq,not:fmtSeq(x0,G.steps),bestNot:fmtSeq(x0,bestSeq),nOpts:opts.length};
-  const useGnu=GNU.status()==="ready"&&opts.length>1;
+  if(G.turnHinted){cls=HINT;loss=0;}
+  const h={who:"you",dice:d,before:clone(G.turnStart),seq:G.steps.slice(),cls,loss,bestSeq,not:fmtSeq(x0,G.steps),bestNot:fmtSeq(x0,bestSeq),nOpts:opts.length,hint:G.turnHinted};
+  const useGnu=GNU.status()==="ready"&&opts.length>1&&!G.turnHinted;
   G.hist.push(h);setEval(myP);logRender();
   if(useGnu)jEl("jFb").innerHTML="";else showMoveBadge(h);
   G.phase="wait";renderJ();jBoardDraw();
@@ -1924,8 +1926,8 @@ function checkOver(){const you=G.pos.pOff===15,bot=G.pos.oOff===15;if(!you&&!bot
   if(you){SFX.win();burst(jEl("jWrap"),"+25 XP",true);}else SFX.lose();
   setStatus(you?"Felicitări!":"Data viitoare.");
   return true;}
-function accuracy(hist){const m=hist.filter(h=>h.who==="you"&&h.cls&&h.cls.id!=="forced");if(!m.length)return null;return m.reduce((s,h)=>s+Math.max(0,100-4*h.loss),0)/m.length;}
-function prOf(hist){const m=hist.filter(h=>h.who==="you"&&h.src==="gnu"&&h.cls.id!=="forced");if(!m.length)return null;return m.reduce((s,h)=>s+h.loss,0)/m.length*5;}
+function accuracy(hist){const m=hist.filter(h=>h.who==="you"&&h.cls&&h.cls.id!=="forced"&&h.cls.id!=="hint");if(!m.length)return null;return m.reduce((s,h)=>s+Math.max(0,100-4*h.loss),0)/m.length;}
+function prOf(hist){const m=hist.filter(h=>h.who==="you"&&h.src==="gnu"&&h.cls.id!=="forced"&&h.cls.id!=="hint");if(!m.length)return null;return m.reduce((s,h)=>s+h.loss,0)/m.length*5;}
 function logRender(){jEl("jLogBox").hidden=!G.hist.length;jEl("jLog").innerHTML=G.hist.map((h,i)=>h.who==="you"?`<span class="lg you" style="--c:${h.cls.col}" title="${h.cls.ro}"><i>${h.cls.sym}</i>${h.dice[0]}-${h.dice[1]} <span class="mono">${h.not}</span></span>`:`<span class="lg bot">${h.dice[0]}-${h.dice[1]} <span class="mono">${h.not}</span></span>`).join("");
   const l=jEl("jLog");l.scrollLeft=l.scrollWidth;}
 const LVINFO={incepator:"Mută la întâmplare.",usor:"Greșește des.",mediu:"Joacă bine, cu mici greșeli.",greu:"Motorul GNU, cu mici variații.",expert:"Motorul GNU la putere maximă."};
@@ -1979,6 +1981,14 @@ function gnuSeq(play,d1,d2){const rem=d1===d2?[d1,d1,d1,d1]:[d1,d2];return(play|
 async function gnuAnalyze(pos,side,d1,d2){const r=await GNU.moves({board:gnuBoard(pos),dice:[d1,d2],player:side==="you"?"x":"o","score-moves":true});
   if(!r||r.error||!Array.isArray(r)||!r.length)return null;
   const x=ENG.canonFor(pos,side);return r.map(m=>{const seq=gnuSeq(m.play,d1,d2);let key=null;try{key=ENG.key(ENG.apply(x,seq));}catch(e){}return{seq,key,eq:m.evaluation.eq,diff:m.evaluation.diff,win:m.evaluation.probability.win,winG:m.evaluation.probability.winG};});}
+// hint: cea mai bună mutare GNU care continuă pașii deja făcuți în tura asta
+async function hintFor(){const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;const list=await gnuAnalyze(G.turnStart,"you",d[0],d[1]);if(!list)return null;
+  const x0=ENG.canonFor(G.turnStart,"you"),k=G.steps.length,key=sq=>{try{return ENG.key(ENG.apply(x0,sq));}catch(e){return null;}};
+  const pre=sq=>G.steps.every((m,i)=>sq[i]&&sq[i][0]===m[0]&&sq[i][1]===m[1]&&sq[i][2]===m[2]);
+  const keyed=G.seqs.map(sq=>({sq,key:key(sq)}));
+  for(const m of list){if(-m.diff*100>CLS_EQ[2])break;const hit=keyed.find(o=>o.key===m.key&&pre(o.sq));if(hit)return{rest:hit.sq.slice(k),full:hit.sq,not:fmtSeq(x0,hit.sq),reset:false};}
+  const top=keyed.find(o=>o.key===list[0].key);if(!top)return null;
+  return{rest:top.sq,full:top.sq,not:fmtSeq(x0,top.sq),reset:k>0};}
 const CLS_EQ=[.1,1,3,6,12,999]; // praguri în equity×100 pentru: cea mai bună, excelentă, bună, imprecizie, greșeală, gafă
 function classifyEq(loss,n){if(n<=1)return FORCED;return CLS[CLS_EQ.findIndex(t=>loss<=t)];}
 function renderGnuStatus(){const el=document.getElementById("gnuChip");if(!el)return;const st=GNU.status();
@@ -1989,7 +1999,7 @@ let RP={i:null};
 function renderReport(){const box=jEl("rpBody");const hist=G.hist;
   if(!hist.length){box.innerHTML=`<div class="card stack"><p>Încă nu ai jucat un meci în sesiunea asta.</p><a class="btn gold" href="#joc">Joacă acum</a></div>`;return;}
   const acc=accuracy(hist);const mine=hist.filter(h=>h.who==="you");
-  const counts=[...CLS,FORCED].map(c=>[c,mine.filter(h=>h.cls.id===c.id).length]);
+  const counts=[...CLS,FORCED,HINT].map(c=>[c,mine.filter(h=>h.cls.id===c.id).length]).filter(([c,n])=>c!==HINT||n);
   const C=2*Math.PI*44;
   box.innerHTML=`<div class="card rptop"><div class="accring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="5"/><circle cx="50" cy="50" r="44" fill="none" stroke="#ead08f" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-(acc||0)/100)}" transform="rotate(-90 50 50)"/></svg><b>${acc==null?"–":Math.round(acc)}</b><small>precizie</small></div>
     <div class="clsgrid">${counts.map(([c,n])=>`<div style="--c:${c.col}"><i>${c.sym}</i><span>${c.ro}</span><b>${n}</b></div>`).join("")}</div></div>
