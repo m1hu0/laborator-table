@@ -1,0 +1,11 @@
+// Laboratorul de Table — service worker
+// Pagina (index.html) se ia mereu întâi de pe internet, ca orice update să apară la următoarea deschidere.
+// Fișierele mari (motorul GNU, librăriile, fonturile) se servesc din cache și se reîmprospătează în fundal.
+// Fără internet, totul merge din cache.
+const V="table-v2",FILES=["./", "index.html", "fonts.css", "gnubg.wasm", "lib/three.min.js", "lib/cannon.min.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "fonts/hanken-grotesk-latin-400-normal.woff2", "fonts/hanken-grotesk-latin-500-normal.woff2", "fonts/hanken-grotesk-latin-600-normal.woff2", "fonts/hanken-grotesk-latin-700-normal.woff2", "fonts/hanken-grotesk-latin-800-normal.woff2", "fonts/hanken-grotesk-latin-ext-400-normal.woff2", "fonts/hanken-grotesk-latin-ext-500-normal.woff2", "fonts/hanken-grotesk-latin-ext-600-normal.woff2", "fonts/hanken-grotesk-latin-ext-700-normal.woff2", "fonts/hanken-grotesk-latin-ext-800-normal.woff2", "fonts/playfair-display-latin-500-italic.woff2", "fonts/playfair-display-latin-500-normal.woff2", "fonts/playfair-display-latin-600-normal.woff2", "fonts/playfair-display-latin-ext-500-italic.woff2", "fonts/playfair-display-latin-ext-500-normal.woff2", "fonts/playfair-display-latin-ext-600-normal.woff2"];
+self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));});
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
+self.addEventListener("fetch",e=>{const req=e.request;if(req.method!=="GET"||new URL(req.url).origin!==location.origin)return;
+  const page=req.mode==="navigate"||/\/(index\.html)?$/.test(new URL(req.url).pathname)||req.url.endsWith(".webmanifest");
+  if(page){e.respondWith(fetch(req,{cache:"no-store"}).then(r=>{const c=r.clone();caches.open(V).then(x=>x.put(req,c));return r;}).catch(()=>caches.match(req,{ignoreSearch:true}).then(r=>r||caches.match("./"))));return;}
+  e.respondWith(caches.match(req,{ignoreSearch:true}).then(hit=>{const net=fetch(req).then(r=>{if(r.ok){const c=r.clone();caches.open(V).then(x=>x.put(req,c));}return r;}).catch(()=>hit);return hit||net;}));});
