@@ -781,7 +781,7 @@ function toPos(s){const p=Array(25).fill(0),o=Array(25).fill(0);for(const k in s
 function clone(q){return{p:q.p.slice(),o:q.o.slice(),pBar:q.pBar,oBar:q.oBar,pOff:q.pOff,oOff:q.oOff};}
 
 const INK="#140d08";
-const CK={you:{face:"#f3ead6",side:"#c9b78f",band:"#e2d5b6",ring:"#b3a27d"},opp:{face:"#3a302a",side:"#120d0a",band:"#2a221d",ring:"#5a4c42"}};
+const CK={you:{face:"#e4d9c1",side:"#b3a383",band:"#d3c6aa",ring:"#a8987a"},opp:{face:"#3a302a",side:"#120d0a",band:"#2a221d",ring:"#5a4c42"}};
 function defs(svg){
   const id=svg.id,d=el("defs",{},svg);
   const gf=el("filter",{id:id+"glow",x:"-50%",y:"-50%",width:"200%",height:"200%"},d);
@@ -792,7 +792,7 @@ function defs(svg){
 // piesă cel-shaded: umbră tare, grosime (margine), față plată cu semilună mai închisă; lift = cât e ridicată
 function checker(parent,svgId,x,y,who,r=R-.5,extra={},lift=0){
   const c=CK[who],g=el("g",Object.assign({class:"ck"},extra),parent),sw=r<15?1.1:1.4;
-  el("ellipse",{class:"ck-sh",cx:x+2+lift*.5,cy:y+3.5+lift*.9,rx:r+(lift?2:0),ry:r*.92+(lift?1.5:0),fill:"#000","fill-opacity":lift?".22":".38"},g);
+  el("ellipse",{class:"ck-sh",cx:x+2+lift*.5,cy:y+3.5+lift*.9,rx:r+(lift?2:0),ry:r*.92+(lift?1.5:0),fill:"#000","fill-opacity":lift?".2":".3"},g);
   y-=lift;
   el("ellipse",{class:"ck-side",cx:x,cy:y+r*.2,rx:r,ry:r*.96,fill:c.side,stroke:INK,"stroke-width":sw},g);
   el("circle",{class:"ck-face",cx:x,cy:y,r,fill:c.face,stroke:INK,"stroke-width":sw},g);
@@ -803,27 +803,27 @@ function checker(parent,svgId,x,y,who,r=R-.5,extra={},lift=0){
 function drawBoard(svg,pos,opt={}){
   svg.innerHTML="";defs(svg);const id=svg.id;
   // rama de nuc: bandă luminată sus, umbrită jos
-  el("rect",{x:1,y:1,width:550,height:422,rx:18,fill:"#3b2819",stroke:INK,"stroke-width":"2"},svg);
-  el("rect",{x:5,y:5,width:542,height:414,rx:15,fill:"#4a3220"},svg);
-  el("path",{d:"M5 212H547V404A15 15 0 0 1 532 419H20A15 15 0 0 1 5 404Z",fill:"#33221a"},svg);
+  el("rect",{x:1,y:1,width:550,height:422,rx:18,fill:"#33231a",stroke:INK,"stroke-width":"2"},svg);
+  el("rect",{x:5,y:5,width:542,height:414,rx:15,fill:"#3f2b1d"},svg);
+  el("path",{d:"M5 212H547V404A15 15 0 0 1 532 419H20A15 15 0 0 1 5 404Z",fill:"#2c1e15"},svg);
   const fields=[[X0,HALF],[X0+HALF+BARW,HALF]];
   fields.forEach(([x,w])=>{
     el("rect",{x:x-3,y:TOP-3,width:w+6,height:BOT-TOP+6,rx:5,fill:"#20150d",stroke:INK,"stroke-width":"1.5"},svg);
-    el("rect",{x,y:TOP,width:w,height:BOT-TOP,rx:3,fill:"#1d4a39"},svg);
+    el("rect",{x,y:TOP,width:w,height:BOT-TOP,rx:3,fill:"#173a2e"},svg);
   });
   for(let n=1;n<=24;n++){const x=px(n),t=isTop(n),idx=t?n-13:12-n,a=idx%2===0;
     const y0=t?TOP:BOT,y1=t?TOP+PH:BOT-PH,l=x-PW/2+1.5,r=x+PW/2-1.5;
-    el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#e3d3ab":"#8e2a2e"},svg);
-    el("polygon",{points:`${x},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#bfa977":"#651b1f"},svg);
-    el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:"none",stroke:INK,"stroke-width":"1.2","stroke-linejoin":"round"},svg);
+    el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#cfc09b":"#6e2a2b"},svg);
+    el("polygon",{points:`${x},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#ad9a72":"#52201f"},svg);
+    el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:"none",stroke:INK,"stroke-width":"1","stroke-opacity":".8","stroke-linejoin":"round"},svg);
     const hl=(opt.dests||[]).includes(n);
     const lab=el("text",{x,y:t?15:417,"text-anchor":"middle","font-size":"10.5","font-weight":"700","font-family":"Hanken Grotesk, sans-serif",fill:hl?"#ead08f":"#d9cba8","fill-opacity":hl?"1":".6"},svg);lab.textContent=n;
   }
   // umbra tare a ramei pe postav (lumina vine din stânga-sus)
   fields.forEach(([x,w])=>el("path",{d:`M${x} ${TOP}H${x+w}V${TOP+8}H${x+8}V${BOT}H${x}Z`,fill:"#000","fill-opacity":".28","pointer-events":"none"},svg));
   // bara
-  el("rect",{x:X0+HALF,y:TOP-6,width:BARW,height:BOT-TOP+12,fill:"#33221a",stroke:INK,"stroke-width":"1.5"},svg);
-  el("rect",{x:X0+HALF+1,y:TOP-5,width:BARW/2-1,height:BOT-TOP+10,fill:"#4a3220"},svg);
+  el("rect",{x:X0+HALF,y:TOP-6,width:BARW,height:BOT-TOP+12,fill:"#2c1e15",stroke:INK,"stroke-width":"1.5"},svg);
+  el("rect",{x:X0+HALF+1,y:TOP-5,width:BARW/2-1,height:BOT-TOP+10,fill:"#3f2b1d"},svg);
   el("line",{x1:X0+HALF+BARW/2,x2:X0+HALF+BARW/2,y1:TOP,y2:BOT,stroke:INK,"stroke-opacity":".5"},svg);
   // destinații: triunghi luminat + cerc pulsând unde aterizează piesa
   (opt.dests||[]).forEach(n=>{const x=px(n),t=isTop(n);
@@ -878,8 +878,8 @@ function parse(n){return n.split(" ").map(s=>s.split("/").map(Number));}
 function applySegs(q,segs){const r=clone(q);segs.forEach(([a,b])=>{r.p[a]--;r.p[b]++;});return r;}
 function sig(q){return q.p.join(",");}
 function miniDie(parent,x,y,v,sz=20){const g=el("g",{transform:`translate(${x},${y})`},parent);
-  el("rect",{x:-sz/2,y:-sz/2+2.5,width:sz,height:sz,rx:5,fill:"#cbbf9f",stroke:INK,"stroke-width":"1.2"},g);
-  el("rect",{x:-sz/2,y:-sz/2,width:sz,height:sz,rx:5,fill:"#f6f1e4",stroke:INK,"stroke-width":"1.2"},g);
+  el("rect",{x:-sz/2,y:-sz/2+2.5,width:sz,height:sz,rx:5,fill:"#b9ad8f",stroke:INK,"stroke-width":"1.2"},g);
+  el("rect",{x:-sz/2,y:-sz/2,width:sz,height:sz,rx:5,fill:"#e9e1cf",stroke:INK,"stroke-width":"1.2"},g);
   const P={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]}[v];
   P.forEach(([a,b])=>el("circle",{cx:a*sz*.27,cy:b*sz*.27,r:sz*.095,fill:"#1a130e"},g));return g;}
 function demoHops(not,roll){let rem=roll.slice().sort((a,b)=>b-a);const hops=[];
@@ -1611,10 +1611,10 @@ const DICE3D=(()=>{
   const FACES=[[1,0,0,5],[-1,0,0,2],[0,1,0,3],[0,-1,0,4],[0,0,1,6],[0,0,-1,1]];
   // zaruri cel-shaded: lumină în 3 trepte + contur (geometria mărită, cu fețele întoarse)
   let GEO_O=null,GEO_I=null,TOON=null;
-  function toonMap(){if(!TOON){TOON=new THREE.DataTexture(new Uint8Array([95,175,255]),3,1,THREE.LuminanceFormat);TOON.minFilter=TOON.magFilter=THREE.NearestFilter;TOON.generateMipmaps=false;TOON.needsUpdate=true;}return TOON;}
+  function toonMap(){if(!TOON){TOON=new THREE.DataTexture(new Uint8Array([85,160,228]),3,1,THREE.LuminanceFormat);TOON.minFilter=TOON.magFilter=THREE.NearestFilter;TOON.generateMipmaps=false;TOON.needsUpdate=true;}return TOON;}
   function makeDie(){if(!GEO_O){GEO_O=decodeDiceGeo(DICEGEO.o);GEO_I=decodeDiceGeo(DICEGEO.i);}
     const grp=new THREE.Group();
-    const outer=new THREE.Mesh(GEO_O,new THREE.MeshToonMaterial({color:new THREE.Color(0xf3ead6).convertSRGBToLinear(),gradientMap:toonMap()}));
+    const outer=new THREE.Mesh(GEO_O,new THREE.MeshToonMaterial({color:new THREE.Color(0xe4d9c1).convertSRGBToLinear(),gradientMap:toonMap()}));
     const inner=new THREE.Mesh(GEO_I,new THREE.MeshToonMaterial({color:new THREE.Color(0x0b0b0c).convertSRGBToLinear(),gradientMap:toonMap()}));
     const line=new THREE.Mesh(GEO_O,new THREE.MeshBasicMaterial({color:new THREE.Color(0x140d08).convertSRGBToLinear(),side:THREE.BackSide}));line.scale.setScalar(1.07);
     outer.castShadow=true;grp.add(line);grp.add(outer);grp.add(inner);grp.scale.setScalar(H);grp.userData={outer,inner,line};return grp;}
@@ -1656,7 +1656,7 @@ const DICE3D=(()=>{
     const wall=(x,y,z,hx,hy,hz)=>{const b=new CANNON.Body({mass:0,material:mWall});b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz)));b.position.set(x,y,z);world.addBody(b);wallBodies.push(b);};
     wall(B.x0-1,5,cz,1,10,hd+2);wall(B.x1+1,5,cz,1,10,hd+2);wall(cx,5,B.z0-1,hw+2,10,1);wall(cx,5,B.z1+1,hw+2,10,1);wall(cx,8,cz,hw+2,1,hd+2);}
   let sw=0,sh=0;function size(){const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h||(w===sw&&h===sh))return;sw=w;sh=h;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(state==="kept")renderer.render(scene,camera);}
-  function setTint(i,side){const d=dice[i];if(d.tint===side)return;d.tint=side;const u=d.mesh.userData;u.outer.material.color.set(side==="you"?0xf3ead6:0x3a302a).convertSRGBToLinear();u.inner.material.color.set(side==="you"?0x0b0b0c:0xf2f2ef).convertSRGBToLinear();}
+  function setTint(i,side){const d=dice[i];if(d.tint===side)return;d.tint=side;const u=d.mesh.userData;u.outer.material.color.set(side==="you"?0xe4d9c1:0x3a302a).convertSRGBToLinear();u.inner.material.color.set(side==="you"?0x0b0b0c:0xf2f2ef).convertSRGBToLinear();}
   function placeRest(side){const cx=(B.x0+B.x1)/2;dice.forEach((d,i)=>{if(!d.active)return;const b=d.body;b.position.set(cx+(i?.5:-.5),H,side==="you"?B.z1-1.1:B.z0+1.1);
     const f=FACES[rngInt(6)];const q=new CANNON.Quaternion();q.setFromVectors(new CANNON.Vec3(f[0],f[1],f[2]),new CANNON.Vec3(0,1,0));
     const spin=new CANNON.Quaternion();spin.setFromAxisAngle(new CANNON.Vec3(0,1,0),rngFloat()*Math.PI*2);b.quaternion=spin.mult(q);b.velocity.set(0,0,0);b.angularVelocity.set(0,0,0);});}
