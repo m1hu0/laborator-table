@@ -1846,7 +1846,8 @@ function renderJ(){
   const ctl=jEl("jCtl");const d=G.dice;
   const d3=S.dice3d!==false&&DICE3D.available();jEl("jDice").classList.toggle("big",!d3);jEl("jDice").classList.toggle("mini",d3);
   jEl("jDice").innerHTML=d?diceHTML(d.length===4?[d[0],d[0]]:d,[],G.justRolled&&!d3):"";G.justRolled=false;
-  if(G.hint&&G.hint.at!==G.steps.length)G.hint=null;
+  if(G.hint&&G.hint.reset&&!G.steps.length)G.hint.reset=false;
+  if(G.hint&&!G.hint.reset&&G.hint.at!==G.steps.length){G.hint=null;if(G.phase==="move")setStatus(G.pos.pBar?"Ești pe bară: intră întâi cu piesa de pe bară.":"Rândul tău.");}
   if(G.phase==="move")ctl.innerHTML=`${hintBtn()}<div class="urpair" role="group" aria-label="Mutări"><button class="btn ghost small ur" id="jUndo" type="button" aria-label="Înapoi" title="Înapoi (Ctrl+Z)"${G.steps.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="btn ghost small ur" id="jRedo" type="button" aria-label="Refă" title="Refă (Ctrl+Y)"${G.redo&&G.redo.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></div>${S.autoOk!==false?"":`<button class="btn green small" id="jOk" type="button" ${G.steps.length===G.max?"":"disabled"}>Confirmă</button>`}`;
   else ctl.innerHTML=`<span class="hint">${G.phase==="bot"?"Botul se gândește…":""}</span>`;
   const hb=jEl("jHint");if(hb)hb.addEventListener("click",useHint);
@@ -1856,20 +1857,20 @@ function renderJ(){
 }
 function jBoardDraw(extra={}){JM.draw(extra);}
 const BULB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
-function hintBtn(){const ok=GNU.status()==="ready",dis=!ok||(G.hints<=0&&!G.turnHinted),t=ok?`Hint (${G.hints} rămase)`:"Hint indisponibil";
+function hintBtn(){const ok=GNU.status()==="ready",dis=!ok||G.steps.length===G.max||(G.hints<=0&&!G.turnHinted),t=ok?`Hint (${G.hints} rămase)`:"Hint indisponibil";
   return `<button class="btn ghost small hintbtn" id="jHint" type="button" aria-label="${t}" title="${t}"${dis?" disabled":""}>${BULB}<span>${G.hints}</span></button>`;}
 function hintOpt(){const h=G.hint;if(!h||h.at!==G.steps.length)return{};const o={hintFrom:[...new Set(h.rest.map(m=>m[0]))]};
   if(h.level===2&&G.sel==null){o.dests=[...new Set(h.rest.map(m=>m[1]).filter(t=>t>=1&&t<=24))];if(h.rest.some(m=>m[1]===0))o.zoneTray=true;}
   return o;}
-async function useHint(){if(G.phase!=="move"||G.anim||G.hintBusy||GNU.status()!=="ready"||(G.hints<=0&&!G.turnHinted))return;
-  G.hintBusy=true;let r=null;try{r=await hintFor();}finally{G.hintBusy=false;}
-  if(G.phase!=="move")return;
+async function useHint(){if(G.phase!=="move"||G.anim||G.hintBusy||GNU.status()!=="ready"||G.steps.length===G.max||(G.hints<=0&&!G.turnHinted))return;
+  const turn=G.turnStart,k=G.steps.length;G.hintBusy=true;let r=null;try{r=await hintFor();}finally{G.hintBusy=false;}
+  if(G.phase!=="move"||G.turnStart!==turn||G.steps.length!==k)return;
   if(!r){setStatus("Hint indisponibil acum.");return;}
   if(!G.turnHinted){G.hints--;G.turnHinted=true;}
-  const level=G.hint&&G.hint.at===G.steps.length?2:1;
-  G.hint={level,at:G.steps.length,rest:r.rest,not:r.not,reset:r.reset};
-  setStatus(r.reset?`Ce ai mutat nu duce la o mutare bună. Dă Înapoi. Cea mai bună era <b>${r.not}</b>.`:level===1?"Mută piesele luminate. Apasă din nou pentru mutarea întreagă.":`Cea mai bună: <b>${r.not}</b>`);
-  renderJ();jBoardDraw();}
+  const level=r.reset||(G.hint&&G.hint.at===G.steps.length)?2:1;
+  G.hint={level,at:r.reset?0:G.steps.length,rest:r.rest,not:r.not,reset:r.reset};
+  setStatus(r.reset?`Ce ai mutat nu duce la o mutare bună. Dă Înapoi până la început. Cea mai bună: <b>${r.not}</b>.`:level===1?"Mută piesele luminate. Apasă din nou pentru mutarea întreagă.":`${r.best?"Cea mai bună":"Bună de aici"}: <b>${r.not}</b>`);
+  renderJ();if(!G.anim)jBoardDraw();}
 async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";
   const d3=S.dice3d!==false&&DICE3D.available();let a,b;
   if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:["Tu"],text:S.autoRoll===true?"":"Aruncă zarul tău"});
@@ -2008,9 +2009,9 @@ async function hintFor(){const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;
   const x0=ENG.canonFor(G.turnStart,"you"),k=G.steps.length,key=sq=>{try{return ENG.key(ENG.apply(x0,sq));}catch(e){return null;}};
   const pre=sq=>G.steps.every((m,i)=>sq[i]&&sq[i][0]===m[0]&&sq[i][1]===m[1]&&sq[i][2]===m[2]);
   const keyed=G.seqs.map(sq=>({sq,key:key(sq)}));
-  for(const m of list){if(-m.diff*100>CLS_EQ[2])break;const hit=keyed.find(o=>o.key===m.key&&pre(o.sq));if(hit)return{rest:hit.sq.slice(k),full:hit.sq,not:fmtSeq(x0,hit.sq),reset:false};}
+  for(const m of list){if(-m.diff*100>CLS_EQ[2])break;const hit=keyed.find(o=>o.key===m.key&&pre(o.sq));if(hit)return{rest:hit.sq.slice(k),full:hit.sq,not:fmtSeq(x0,hit.sq),reset:false,best:m.key===list[0].key};}
   const top=keyed.find(o=>o.key===list[0].key);if(!top)return null;
-  return{rest:top.sq,full:top.sq,not:fmtSeq(x0,top.sq),reset:k>0};}
+  return{rest:top.sq,full:top.sq,not:fmtSeq(x0,top.sq),reset:k>0,best:true};}
 const CLS_EQ=[.1,1,3,6,12,999]; // praguri în equity×100 pentru: cea mai bună, excelentă, bună, imprecizie, greșeală, gafă
 function classifyEq(loss,n){if(n<=1)return FORCED;return CLS[CLS_EQ.findIndex(t=>loss<=t)];}
 function renderGnuStatus(){if(typeof G!=="undefined"&&G.phase==="move")renderJ();const el=document.getElementById("gnuChip");if(!el)return;const st=GNU.status();
