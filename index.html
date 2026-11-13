@@ -372,6 +372,11 @@ ul.tight li::marker{color:var(--brass)}
 
 /* ---------- ecran complet ---------- */
 .fsbtn{width:38px;padding:0}
+.urpair{display:inline-flex}
+.urpair .ur{width:44px;padding:0}
+.urpair .ur svg{width:20px;height:20px;flex:none}
+.urpair .ur:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
+.urpair .ur:last-child{border-top-left-radius:0;border-bottom-left-radius:0;border-left-width:0}
 .fsbtn svg{width:20px;height:20px;flex:none}
 .fsbtn .ex{display:none}
 body.fsOn{overflow:hidden}
@@ -556,7 +561,7 @@ body.fsOn .fsbtn .ex{display:block}
 <!-- ============ QUIZ ============ -->
 <section class="view" id="v-quiz" hidden>
   <div class="card stack">
-    <div class="toolbar"><span class="dice big" id="qDice"></span><div class="row"><button class="btn ghost small" id="qUndo" type="button">Anulează</button><button class="btn small" id="qSkip" type="button">Soluția</button><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div>
+    <div class="toolbar"><span class="dice big" id="qDice"></span><div class="row"><div class="urpair" role="group" aria-label="Mutări"><button class="btn ghost small ur" id="qUndo" type="button" aria-label="Înapoi" title="Înapoi (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="btn ghost small ur" id="qRedo" type="button" aria-label="Refă" title="Refă (Ctrl+Y)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></div><button class="btn small" id="qSkip" type="button">Soluția</button><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div>
     <div class="boardwrap" id="qWrap"><svg class="board" id="qBoard" viewBox="0 0 552 424" role="img" aria-label="Tabla de quiz"></svg></div>
     <div class="toolbar sm"><span class="hint">Joacă cea mai bună mutare.</span><div class="row sm nowrap"><span class="chip gold" id="qCombo"></span><span class="chip" id="qLevel"></span></div></div>
   </div>
@@ -1029,7 +1034,7 @@ const SFX=(()=>{let ctx=null,out=null;const buf={};
   };})();
 // sunete pentru tot ce se apasă în aplicație
 document.addEventListener("click",e=>{const t=e.target;if(!t.closest)return;
-  if(t.closest(".fsbtn,#jUndo,#qUndo"))return t.closest("#jUndo,#qUndo")?SFX.undo():SFX.press();
+  if(t.closest(".fsbtn,.ur"))return t.closest("#jUndo,#qUndo")?SFX.undo():SFX.press();
   if(t.closest(".btn,.choice"))return SFX.press();
   if(t.closest(".pill,.seg button,.rbtn,nav a,aside a,.lrow,.ghead,.node,.task,.xbtn,.mvrow"))return SFX.select();},true);
 document.addEventListener("change",e=>{if(e.target.matches&&e.target.matches('.toggle input[type="checkbox"]'))SFX.toggle(e.target.checked);},true);
@@ -1049,7 +1054,7 @@ function makeMover(cfg){
       const prev=map.get(cur);if(!prev||prev.length>chain.length||(prev.length===chain.length&&chain[0][2]<prev[0][2]))map.set(cur,chain.slice());if(cur===0)break;}});
     return map;}
   function used(dice){const u=dice.map(()=>false);S.steps.forEach(m=>{const i=dice.findIndex((v,k)=>!u[k]&&v===m[2]);if(i>=0)u[i]=true;else{const j=dice.findIndex((v,k)=>!u[k]&&v>=m[2]);if(j>=0)u[j]=true;}});return u;}
-  function begin(pos,d1,d2){Object.assign(S,{turnStart:clone(pos),pos:clone(pos),steps:[],sel:null,drag:null,anim:false});const r=ENG.plays(ENG.canonFor(pos,"you"),d1,d2);S.seqs=r.seqs;S.max=r.max;return r.max;}
+  function begin(pos,d1,d2){Object.assign(S,{turnStart:clone(pos),pos:clone(pos),steps:[],redo:[],sel:null,drag:null,anim:false});const r=ENG.plays(ENG.canonFor(pos,"you"),d1,d2);S.seqs=r.seqs;S.max=r.max;return r.max;}
   function draw(extra={}){
     let shown=S.pos;const dragging=S.drag&&S.drag.moved;
     if(dragging){shown=clone(S.pos);if(S.drag.from===25)shown.pBar--;else shown.p[S.drag.from]--;}
@@ -1058,13 +1063,16 @@ function makeMover(cfg){
     drawBoard(svg(),shown,opt);
     if(dragging)S.drag.ghost=checker(svg(),cfg.svg,0,0,"you",R+1.5,{style:"pointer-events:none",transform:`translate(${S.drag.x},${S.drag.y})`});}
   function anim(pos,moves,cb){animateMoves(svg(),pos,moves,{},cb);}
-  function doStep(from,to,animate){const chain=reach(from).get(to);if(!chain)return false;S.lastMv=null;
+  function doStep(from,to,animate){const chain=reach(from).get(to);if(!chain)return false;S.lastMv=null;S.redo=[];
     chain.forEach(m=>S.steps.push(m));const am=chain.map(m=>["y",m[0],m[1],m[2]]);
     const fin=p=>{S.pos=p;S.sel=null;if(S.steps.length<S.max&&to>=1&&next().some(x=>x[0]===to))S.sel=to;S.anim=false;draw();cfg.onChange&&cfg.onChange();
       if(S.steps.length===S.max&&cfg.onComplete)cfg.onComplete();};
     if(animate&&!reduce){S.anim=true;anim(S.pos,am,fin);}else{const p=am.reduce(applyMove,S.pos);if(p.oBar>S.pos.oBar)SFX.hit();else if(to===0)SFX.off();else SFX.place();fin(p);}
     return true;}
-  function undo(){if(S.anim||!S.steps.length)return;S.steps.pop();S.pos=S.steps.reduce((p,m)=>applyMove(p,["y",m[0],m[1],m[2]]),clone(S.turnStart));S.sel=null;draw();cfg.onChange&&cfg.onChange();}
+  function undo(){if(S.anim||!S.steps.length)return;S.redo.push(S.steps.pop());S.pos=S.steps.reduce((p,m)=>applyMove(p,["y",m[0],m[1],m[2]]),clone(S.turnStart));S.sel=null;draw();cfg.onChange&&cfg.onChange();}
+  function redo(){if(S.anim||!S.redo||!S.redo.length)return;const m=S.redo.pop();S.lastMv=null;S.steps.push(m);S.sel=null;
+    const fin=p=>{S.pos=p;S.anim=false;draw();cfg.onChange&&cfg.onChange();if(S.steps.length===S.max&&cfg.onComplete)cfg.onComplete();};
+    const am=[["y",m[0],m[1],m[2]]];if(!reduce){S.anim=true;cfg.onChange&&cfg.onChange();anim(S.pos,am,fin);}else fin(am.reduce(applyMove,S.pos));}
   let lastTap={n:null,t:0};
   function tap(n){if(!cfg.active()||S.anim)return;
     const now=performance.now(),dbl=lastTap.n===n&&now-lastTap.t<380;lastTap={n,t:now};
@@ -1086,11 +1094,11 @@ function makeMover(cfg){
   wrap.addEventListener("pointerup",e=>{const d=S.drag;if(!d)return;S.drag=null;if(!d.moved){tap(d.from);return;}
     const p=pt(e)||{x:-99,y:-99},to=pointAtFull(p.x,p.y);if(to!=null&&reach(d.from).has(to)){S.sel=d.from;doStep(d.from,to,false);}else{S.sel=null;draw();}});
   wrap.addEventListener("pointercancel",()=>{if(S.drag){const was=S.drag.moved;S.drag=null;if(was){S.sel=null;draw();}}});
-  return{begin,draw,undo,tap,next,reach,doStep,used,anim};
+  return{begin,draw,undo,redo,tap,next,reach,doStep,used,anim};
 }
 
 const QM=makeMover({S:Q,svg:"qBoard",wrap:"qWrap",active:()=>!Q.done,onChange:drawQHud,onComplete:()=>{Q.sel=null;evaluate();}});
-function drawQHud(roll){document.getElementById("qDice").innerHTML=diceHTML(Q.roll,QM.used(Q.roll),roll);document.getElementById("qUndo").disabled=Q.done||!Q.steps.length;}
+function drawQHud(roll){document.getElementById("qDice").innerHTML=diceHTML(Q.roll,QM.used(Q.roll),roll);document.getElementById("qUndo").disabled=Q.done||!Q.steps.length;document.getElementById("qRedo").disabled=Q.done||!(Q.redo&&Q.redo.length);}
 function drawQ(roll){if(!Q.done)QM.draw();drawQHud(roll);}
 function renderHud(){
   const b=S.boxes[Q.key]||0;
@@ -1123,6 +1131,7 @@ function finish(kind,played){
   else setTimeout(()=>{if(Q.done)runDemo(document.getElementById("qBoard"),o.best,Q.roll);},500);
 }
 document.getElementById("qUndo").addEventListener("click",()=>QM.undo());
+document.getElementById("qRedo").addEventListener("click",()=>QM.redo());
 document.getElementById("qSkip").addEventListener("click",()=>{if(!Q.done&&!Q.anim)finish("no",Q.steps.length?merged():"");});
 document.getElementById("qNext").addEventListener("click",()=>{newQ();window.scrollTo({top:0,behavior:reduce?"auto":"smooth"});});
 
@@ -1831,9 +1840,10 @@ function renderJ(){
   const ctl=jEl("jCtl");const d=G.dice;
   const d3=S.dice3d!==false&&DICE3D.available();jEl("jDice").classList.toggle("big",!d3);jEl("jDice").classList.toggle("mini",d3);
   jEl("jDice").innerHTML=d?diceHTML(d.length===4?[d[0],d[0]]:d,[],G.justRolled&&!d3):"";G.justRolled=false;
-  if(G.phase==="move")ctl.innerHTML=`<button class="btn ghost small" id="jUndo" type="button" ${G.steps.length?"":"disabled"}>Anulează</button>${S.autoOk!==false?"":`<button class="btn green small" id="jOk" type="button" ${G.steps.length===G.max?"":"disabled"}>Confirmă</button>`}`;
+  if(G.phase==="move")ctl.innerHTML=`<div class="urpair" role="group" aria-label="Mutări"><button class="btn ghost small ur" id="jUndo" type="button" aria-label="Înapoi" title="Înapoi (Ctrl+Z)"${G.steps.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="btn ghost small ur" id="jRedo" type="button" aria-label="Refă" title="Refă (Ctrl+Y)"${G.redo&&G.redo.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></div>${S.autoOk!==false?"":`<button class="btn green small" id="jOk" type="button" ${G.steps.length===G.max?"":"disabled"}>Confirmă</button>`}`;
   else ctl.innerHTML=`<span class="hint">${G.phase==="bot"?"Botul se gândește…":""}</span>`;
-  const u=jEl("jUndo");if(u)u.addEventListener("click",undoStep);
+  const u=jEl("jUndo");if(u)u.addEventListener("click",()=>JM.undo());
+  const r=jEl("jRedo");if(r)r.addEventListener("click",()=>JM.redo());
   const ok=jEl("jOk");if(ok)ok.addEventListener("click",confirmMove);
 }
 function jBoardDraw(extra={}){JM.draw(extra);}
@@ -1859,7 +1869,6 @@ function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:
   setStatus(G.pos.pBar?"Ești pe bară: intră întâi cu piesa de pe bară.":"Rândul tău.");}
 const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,
   onComplete:()=>{if(S.autoOk!==false)setTimeout(()=>{if(G.phase==="move"&&G.steps.length===G.max&&!G.anim)confirmMove();},280);}});
-function undoStep(){JM.undo();}
 function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
   const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;const x0=ENG.canonFor(G.turnStart,"you");
   const opts=ENG.unique(x0,G.seqs).map(o=>Object.assign(o,{p:ENG.evalMover(o.res)})).sort((a,b)=>b.p-a.p);
@@ -2033,6 +2042,9 @@ document.addEventListener("click",e=>{const b=e.target.closest(".fsbtn");if(!b)r
 window.addEventListener("resize",()=>{if(!FSV.busy)fsFit();});
 ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!(document.fullscreenElement||document.webkitFullscreenElement))fsExit();else fsFit();}));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&FSV.view)fsExit();});
+document.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey||(e.target.closest&&e.target.closest("input,textarea")))return;
+  const k=e.key.toLowerCase(),v=location.hash.slice(1);const M=v==="joc"&&G.phase==="move"?JM:v==="quiz"&&!Q.done?QM:null;if(!M)return;
+  if(k==="z"&&!e.shiftKey){e.preventDefault();if((M===JM?G:Q).steps.length)SFX.undo();M.undo();}else if(k==="y"||(k==="z"&&e.shiftKey)){e.preventDefault();M.redo();}});
 
 /* ================= RUTARE ================= */
 const VIEWS=["acasa","joc","raport","quiz","pip","lectii","lectie","deschideri","concepte","glosar"];
