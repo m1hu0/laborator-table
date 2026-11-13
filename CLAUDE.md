@@ -1,13 +1,13 @@
 # Laboratorul de Table
 
 Aplicație web de antrenament la table (backgammon), în română: joc contra botului cu analiză GNU Backgammon,
-quiz de deschideri (inclusiv dubluri), pip count, lecții interactive, glosar, tablă 2D/3D, zaruri 3D, sunete.
+quiz de deschideri (inclusiv dubluri), pip count, lecții interactive, glosar, zaruri 3D, sunete.
 Se publică pe GitHub Pages și se instalează ca aplicație (PWA) pe tabletă, telefon și laptop.
 
 ## Structură
 - `index.html` — toată aplicația (HTML + CSS + JS într-un singur fișier; include modelul de zar și sunetele codate base64).
 - `gnubg.wasm` — motorul GNU Backgammon compilat în WebAssembly (pornit într-un Worker din index.html).
-- `lib/three.min.js` (r128), `lib/cannon.min.js` (0.6.2) — tabla 3D și fizica zarurilor. Versiunile sunt fixe; nu le actualiza.
+- `lib/three.min.js` (r128), `lib/cannon.min.js` (0.6.2) — grafica și fizica zarurilor 3D. Versiunile sunt fixe; nu le actualiza.
 - `fonts/` + `fonts.css` — Playfair Display (titluri) și Hanken Grotesk (text), doar subseturile latin și latin-ext.
 - `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `sw.js` — instalare ca aplicație și funcționare offline.
 
@@ -38,4 +38,3 @@ După orice modificare: testează local, apoi `git add -A && git commit -m "<ce 
 - Păstrează mențiunea de licență CC BY 4.0 pentru modelul de zar 3D („Dice” de juliov.cg), afișată sub tabla de joc.
 - Sunetele: zaruri/piese din @3d-dice/dice-box-threejs (MIT), interfață din uisfx „zen” (CC0).
 - Stil: „club de table, seara” — postav verde, nuc, alamă, piese fildeș (tu) și abanos (bot). Fără gradiente decorative, fără emoji, fără etichete cu majuscule.
-- Antrenorul AI depinde de Claude (window.claude) și nu e disponibil pe GitHub Pages; aplicația îl ascunde singură.
