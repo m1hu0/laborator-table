@@ -811,7 +811,7 @@ function drawBoard(svg,pos,opt={}){
     el("rect",{x:x-3,y:TOP-3,width:w+6,height:BOT-TOP+6,rx:5,fill:"#20150d",stroke:INK,"stroke-width":"1.5"},svg);
     el("rect",{x,y:TOP,width:w,height:BOT-TOP,rx:3,fill:"#173a2e"},svg);
   });
-  for(let n=1;n<=24;n++){const x=px(n),t=isTop(n),idx=t?n-13:12-n,a=idx%2===0;
+  for(let n=1;n<=24;n++){const x=px(n),t=isTop(n),a=n%2===1; // culorile alternează pe tot traseul 1–24
     const y0=t?TOP:BOT,y1=t?TOP+PH:BOT-PH,l=x-PW/2+1.5,r=x+PW/2-1.5;
     el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#cfc09b":"#6e2a2b"},svg);
     el("polygon",{points:`${x},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#ad9a72":"#52201f"},svg);
