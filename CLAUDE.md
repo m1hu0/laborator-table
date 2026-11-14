@@ -9,7 +9,7 @@ Se publică pe GitHub Pages și se instalează ca aplicație (PWA) pe tabletă, 
 - `gnubg.wasm` — motorul GNU Backgammon compilat în WebAssembly (pornit într-un Worker din index.html).
 - `lib/three.min.js` (r128), `lib/cannon.min.js` (0.6.2) — grafica și fizica zarurilor 3D. Versiunile sunt fixe; nu le actualiza.
 - `fonts/` + `fonts.css` — Playfair Display (titluri) și Hanken Grotesk (text), doar subseturile latin și latin-ext.
-- `tex/` — texturile tablei (piele, postav), plăci de 512 px nuanțate cu culorile tablei; pielea are relieful din texturi ambientCG (CC0, fără atribuire obligatorie): Leather037, Leather039; postavul e generat din zgomot filtrat. `grain.png`/`grain-w.png` — fibra de lemn a pieselor, generată.
+- `tex/` — texturile tablei (piele, postav), plăci de 1024 px nuanțate cu culorile tablei; pielea are relieful din texturi ambientCG (CC0, fără atribuire obligatorie): Leather037, Leather039; postavul e generat din zgomot filtrat. `grain.png`/`grain-w.png` — fibra de lemn a pieselor, generată.
 - `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `sw.js` — instalare ca aplicație și funcționare offline.
 
 ## Rulare locală
