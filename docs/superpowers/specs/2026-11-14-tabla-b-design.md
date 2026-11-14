@@ -52,7 +52,7 @@ Nimic nu are luciu și nu există cusături.
 
 ### Piesele
 - Fața e plată, cu o lumină foarte moale. Muchia are aceeași culoare.
-- Fibră de lemn foarte discretă pe față (`tex/grain.png` închisă pe albe, `tex/grain-w.png` deschisă pe negre, opacitate .07, pattern 96 unități rotit 8°).
+- Fibră de lemn foarte discretă pe față (`tex/grain.png` închisă pe albe, `tex/grain-w.png` deschisă pe negre, opacitate .04, pattern 96 unități rotit 8°).
 - Au un inel teșit.
 - Nu au arc gri și nici luciu.
 
