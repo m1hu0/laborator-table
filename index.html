@@ -13,12 +13,12 @@
 :root{
   --felt:#0f2620; --felt-hi:#16352c; --felt-lo:#0a1b16;
   --walnut:#1f1712; --walnut-2:#291e17; --walnut-3:#35271e;
-  --brass:#c9a55a; --brass-hi:#ead08f; --brass-lo:#7a6130;
+  --brass:#c9a55a; --brass-hi:#ead08f;
   --bone:#efe7d4; --bone-2:#cbbfa6;
   --sage:#9aab9f; --dim:#6b7b70;
   --ox:#b4474b; --jade:#93cfa5;
   --line:rgba(201,165,90,.2); --line-2:rgba(239,231,212,.09);
-  --fg:var(--bone); --muted:var(--sage); --gold:var(--brass); --win:var(--jade); --lose:var(--ox); --info:#a9c3d9;
+  --fg:var(--bone); --muted:var(--sage); --lose:var(--ox);
   --f-display:"Playfair Display", Georgia, serif;
   --f-body:"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
   --r:16px; --nav-h:68px;
@@ -43,10 +43,9 @@ h3{font-family:var(--f-body);font-size:15px;font-weight:700;margin:0;line-height
 p{margin:0;max-width:62ch}
 .mono{font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:.01em}
 .muted{color:var(--muted)}
-.eyebrow{font-size:13px;font-weight:600;color:var(--muted)}
 
 /* ---------- materiale ---------- */
-.card,details.acc,.toast,.mvbadge,.panel{position:relative;background-color:rgba(31,23,18,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+.card,details.acc,.toast,.mvbadge{position:relative;background-color:rgba(31,23,18,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
   background-image:linear-gradient(180deg,rgba(255,236,205,.035),transparent 40%);
   border:1px solid rgba(0,0,0,.55);border-radius:var(--r);
   box-shadow:inset 0 1px 0 rgba(255,236,205,.08),0 0 0 1px rgba(201,165,90,.07),0 4px 24px rgba(0,0,0,.35),0 24px 48px -28px rgba(0,0,0,.95)}
@@ -92,7 +91,6 @@ aside.side{display:none}
 .stack{display:flex;flex-direction:column;gap:12px;min-width:0}
 .stack.sm{gap:8px}
 .vstack{display:flex;flex-direction:column;gap:16px}
-.ttl{display:flex;flex-direction:column;gap:6px;min-width:0}
 .phead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:4px}
 .phead.col{flex-direction:column;align-items:stretch;margin-bottom:16px}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:48px}
@@ -137,6 +135,10 @@ b.gold{color:var(--brass-hi)}
 .chip.win{background:rgba(147,207,165,.12);color:var(--jade)}
 .field{display:flex;flex-direction:column;gap:8px}
 .flabel{font-size:14px;font-weight:600;color:var(--muted)}
+.field .toggle+.toggle{margin-top:-4px}
+.pills.wrap{flex-wrap:wrap;overflow:visible}
+.hint:empty{display:none}
+details.acc .body>.chip{align-self:flex-start}
 .toggle{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:500;min-height:36px;cursor:pointer}
 .toggle input{appearance:none;-webkit-appearance:none;flex:none;width:40px;height:24px;margin:0;border-radius:999px;background:rgba(0,0,0,.4);box-shadow:inset 0 1px 3px rgba(0,0,0,.7);position:relative;cursor:pointer;transition:background-color .2s}
 .toggle input::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#7d7466;transition:transform .2s,background-color .2s,box-shadow .2s}
@@ -374,7 +376,14 @@ ul.tight li::marker{color:var(--brass)}
 .tapdice:active .dice{transform:scale(.94)}
 
 /* ---------- ecran complet ---------- */
-.fsbtn{width:38px;padding:0}
+.fsbtn,.eyebtn{width:38px;padding:0}
+.eyebtn svg{width:20px;height:20px;flex:none}
+.eyebtn .off,#v-joc.nox .eyebtn .on{display:none}
+#v-joc.nox .eyebtn .off{display:block}
+/* analiza (bara de șanse, nota mutării, lista de mutări) se stinge, apoi iese din pagină */
+.xtra{transition:opacity .22s ease}
+#v-joc.nox .xtra{opacity:0;pointer-events:none}
+#v-joc.lean .xtra{display:none}
 .urpair{display:inline-flex}
 @keyframes land{0%{transform:scale(1.1,.88)}60%{transform:scale(.97,1.03)}100%{transform:none}}
 .ck.land{transform-box:fill-box;transform-origin:50% 80%;animation:land .14s ease-out}
@@ -415,7 +424,7 @@ body.fsOn .fsbtn .ex{display:block}
 .dthrow.out{opacity:0;transition:opacity .3s}
 .dthrow canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
 .dthrow canvas:active{cursor:grabbing}
-.dthint{position:absolute;top:10px;left:10px;background:rgba(20,15,11,.85);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:600;font-size:13px;pointer-events:none;max-width:calc(100% - 20px)}
+.dthint{position:absolute;bottom:10%;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(20,15,11,.85);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:600;font-size:13px;pointer-events:none;max-width:calc(100% - 20px)}
 .dthint:empty{display:none}
 .dthint b{color:var(--brass-hi)}
 .evalbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;font-size:13.5px;font-weight:600;color:var(--muted)}
@@ -538,30 +547,32 @@ body.fsOn .fsbtn .ex{display:block}
     <summary><span class="t"><h3>Setări</h3><small id="jSetSum"></small></span></summary>
     <div class="body">
       <div class="field"><span class="flabel">Adversar</span>
-        <div class="pills" id="jMode" role="group" aria-label="Adversar"><button class="pill" type="button" data-m="bot">Botul</button><button class="pill" type="button" data-m="doi">Doi jucători, un dispozitiv</button></div>
-        <p class="hint" id="jModeInfo"></p></div>
+        <div class="pills wrap" id="jMode" role="group" aria-label="Adversar"><button class="pill" type="button" data-m="bot">Botul</button><button class="pill" type="button" data-m="doi">Doi jucători, un dispozitiv</button></div>
+        <p class="hint" id="jModeInfo"></p>
+        <label class="toggle" id="jFixedL"><input type="checkbox" id="jFixed"> Tabla fixă, pentru doi jucători față în față</label></div>
       <div class="field" id="jLevelF"><span class="flabel">Nivelul botului</span>
-        <div class="pills" id="jLevel" role="group" aria-label="Nivelul botului"><button class="pill" type="button" data-l="incepator">Începător</button><button class="pill" type="button" data-l="usor">Ușor</button><button class="pill" type="button" data-l="mediu">Mediu</button><button class="pill" type="button" data-l="greu">Greu</button><button class="pill" type="button" data-l="expert">Expert</button></div>
+        <div class="pills wrap" id="jLevel" role="group" aria-label="Nivelul botului"><button class="pill" type="button" data-l="incepator">Începător</button><button class="pill" type="button" data-l="usor">Ușor</button><button class="pill" type="button" data-l="mediu">Mediu</button><button class="pill" type="button" data-l="greu">Greu</button><button class="pill" type="button" data-l="expert">Expert</button></div>
         <p class="hint" id="jLevelInfo"></p></div>
-      <div class="field"><label class="toggle"><input type="checkbox" id="jDice3d"> Zaruri 3D, aruncate cu mâna</label>
-        <label class="toggle"><input type="checkbox" id="jAuto"> Confirmă automat mutarea</label>
-        <label class="toggle"><input type="checkbox" id="jAutoRoll"> Aruncă automat zarurile când e rândul meu</label>
-        <label class="toggle" id="jFixedL"><input type="checkbox" id="jFixed"> Tabla nu se întoarce după fiecare mutare (stați față în față)</label>
-        <label class="toggle"><input type="checkbox" id="jSound"> Sunete</label>
+      <div class="field"><span class="flabel">Joc</span>
+        <label class="toggle"><input type="checkbox" id="jDice3d"> Zaruri 3D, aruncate cu mâna</label>
+        <label class="toggle"><input type="checkbox" id="jAutoRoll"> Aruncă zarurile automat</label>
+        <label class="toggle"><input type="checkbox" id="jAuto"> Confirmă mutarea automat</label>
+        <label class="toggle"><input type="checkbox" id="jSound"> Sunete</label></div>
+      <div class="field"><span class="flabel">Reguli</span>
         <label class="toggle"><input type="checkbox" id="jMartT"> Marț tehnic: câte 2 piese pe fiecare punct din casă, 3 puncte</label>
         <label class="toggle"><input type="checkbox" id="jLinieT"> Linie tehnică: câte o piesă pe fiecare punct din casă, 2 puncte</label></div>
       <span class="chip" id="gnuChip"></span>
     </div>
   </details>
   <div class="card stack">
-    <div class="evalbar" aria-label="Șanse de câștig"><span class="evl"><i class="dot you"></i><span id="evLY">Tu</span> <b id="evYou">50%</b></span><div class="evtrack"><i id="evFill" style="width:50%"></i></div><span class="evl"><b id="evBot">50%</b> <span id="evLB">Bot</span><i class="dot opp"></i></span></div>
-    <div class="toolbar"><span class="dice big" id="jDice"></span><div class="row"><div class="row" id="jCtl"></div><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div>
+    <div class="toolbar"><span class="dice big" id="jDice"></span><div class="row"><div class="row" id="jCtl"></div><div class="row"><button class="btn ghost small eyebtn" id="jEye" type="button" aria-label="Ascunde analiza" title="Ascunde analiza" aria-pressed="false"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1Q11.3 5 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 4"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.9 0 3.6-.6 5-1.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div></div>
+    <div class="evalbar xtra" aria-label="Șanse de câștig"><span class="evl"><i class="dot you"></i><span id="evLY">Tu</span> <b id="evYou">50%</b></span><div class="evtrack"><i id="evFill" style="width:50%"></i></div><span class="evl"><b id="evBot">50%</b> <span id="evLB">Bot</span><i class="dot opp"></i></span></div>
     <div class="boardwrap" id="jWrap"><svg class="board" id="jBoard" viewBox="0 0 552 424" role="img" aria-label="Tabla de joc"></svg><button class="tapdice" id="jTap" type="button" hidden aria-label="Aruncă zarurile"><span class="dice" id="jTapDice"></span><span class="taphint">Atinge zarurile</span></button></div>
     <p class="jstatus" id="jStatus"></p>
   </div>
-  <div id="jFb"></div>
+  <div id="jFb" class="xtra"></div>
   <div id="jOver" hidden></div>
-  <div class="stack sm" id="jLogBox" hidden>
+  <div class="stack sm xtra" id="jLogBox" hidden>
     <div class="row between"><h3>Mutări</h3><a class="link" href="#raport" id="jRpLink">Raport complet</a></div>
     <div class="jlog" id="jLog"></div>
   </div>
@@ -654,7 +665,7 @@ body.fsOn .fsbtn .ex{display:block}
 <!-- CONCEPTE -->
 <section class="view" id="v-concepte" hidden>
   <details class="acc">
-    <summary><span class="ic">×2</span><span class="t"><h3>Cubul de dublare</h3><small>Când dublezi, când accepți</small></span></summary>
+    <summary><span class="t"><h3>Cubul de dublare</h3><small>Când dublezi, când accepți</small></span></summary>
     <div class="body"><div class="minis">
       <div class="mini"><b>Accepți de la 25%</b><span>Refuzi = pierzi 1 sigur. Accepți = joci pe 2. Merită de la 25% șanse (fără marțuri).</span></div>
       <div class="mini"><b>Dublezi înainte să pierzi „piața”</b><span>Când o tură bună te-ar duce în zona în care el ar refuza.</span></div>
@@ -847,7 +858,7 @@ function drawBoard(svg,pos,opt={}){
     el("polygon",{points:`${x-PW/2+1.5},${t?TOP:BOT} ${x+PW/2-1.5},${t?TOP:BOT} ${x},${t?TOP+PH:BOT-PH}`,fill:"#fff","fill-opacity":".13"},svg);});
   (opt.zones||[]).forEach(n=>{const x=px(n),t=isTop(n);
     el("polygon",{points:`${x-PW/2+1.5},${t?TOP:BOT} ${x+PW/2-1.5},${t?TOP:BOT} ${x},${t?TOP+PH:BOT-PH}`,fill:"#ead08f","fill-opacity":".34",stroke:"#ead08f","stroke-width":"2","stroke-linejoin":"round",filter:`url(#${id}glow)`},svg);
-    const lb=el("rect",{x:x-12,y:t?4:406,width:24,height:15,rx:5,fill:"#ead08f"},svg);const tx=el("text",{x,y:t?15:417,"text-anchor":"middle","font-size":"10.5","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:"#1c150b"},svg);tx.textContent=n;});
+    el("rect",{x:x-12,y:t?4:406,width:24,height:15,rx:5,fill:"#ead08f"},svg);const tx=el("text",{x,y:t?15:417,"text-anchor":"middle","font-size":"10.5","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:"#1c150b"},svg);tx.textContent=n;});
   if(opt.zoneBar)el("rect",{x:X0+HALF+2,y:TOP,width:BARW-4,height:BOT-TOP,rx:8,fill:"#ead08f","fill-opacity":".18",stroke:"#ead08f","stroke-width":"2",filter:`url(#${id}glow)`},svg);
   for(let n=1;n<=24;n++){
     [["you",pos.p[n]],["opp",pos.o[n]]].forEach(([who,c])=>{
@@ -1054,7 +1065,7 @@ const SFX=(()=>{let ctx=null,out=null;const buf={};
   };})();
 // sunete pentru tot ce se apasă în aplicație
 document.addEventListener("click",e=>{const t=e.target;if(!t.closest)return;
-  if(t.closest(".fsbtn,.ur,.hintbtn"))return t.closest("#jUndo,#qUndo")?SFX.undo():SFX.press();
+  if(t.closest(".fsbtn,.eyebtn,.ur,.hintbtn"))return t.closest("#jUndo,#qUndo")?SFX.undo():SFX.press();
   if(t.closest(".btn,.choice"))return SFX.press();
   if(t.closest(".pill,.seg button,.rbtn,nav a,aside a,.lrow,.ghead,.node,.task,.xbtn,.mvrow"))return SFX.select();},true);
 document.addEventListener("change",e=>{if(e.target.matches&&e.target.matches('.toggle input[type="checkbox"]'))SFX.toggle(e.target.checked);},true);
@@ -1353,7 +1364,7 @@ function renderPath(){
   document.getElementById("pathUnits").innerHTML=UNITS.map(u=>{const ls=LESSONS.filter(l=>l.unit===u.id);
     return `<div class="unit"><div class="unithead"><h2>${u.title}</h2><p class="muted">${u.sub}</p></div><div class="nodes">${ls.map((l,i)=>{
       const st=done[l.id]?"done":(firstOpen&&firstOpen.id===l.id?"next":"");
-      return `<a class="node ${st}" href="#lectie-${l.id}" style="--off:${offs[i%4]}px"><span class="disc">${done[l.id]?ICON.check:`<span>${LESSONS.indexOf(l)+1}</span>`}</span><span class="nl">${l.title}</span>${st==="next"?'<span class="start">START</span>':""}</a>`;}).join("")}</div></div>`;}).join("");
+      return `<a class="node ${st}" href="#lectie-${l.id}" style="--off:${offs[i%4]}px"><span class="disc">${done[l.id]?ICON.check:`<span>${LESSONS.indexOf(l)+1}</span>`}</span><span class="nl">${l.title}</span>${st==="next"?'<span class="start">Începe</span>':""}</a>`;}).join("")}</div></div>`;}).join("");
 }
 
 /* ---- playerul de lecție ---- */
@@ -2099,7 +2110,7 @@ const LVINFO={incepator:"Mută la întâmplare.",usor:"Greșește des.",mediu:"J
 const LVNAME={incepator:"Începător",usor:"Ușor",mediu:"Mediu",greu:"Greu",expert:"Expert"};
 function renderLevel(){G.level=S.botLevel||G.level;document.querySelectorAll("#jLevel .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.l===G.level));jEl("jLevelInfo").textContent=LVINFO[G.level];jEl("jSetSum").textContent=S.mode==="doi"?"Doi jucători":`Bot ${LVNAME[G.level].toLowerCase()}`;
   document.querySelectorAll("#jMode .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===(S.mode==="doi"?"doi":"bot")));jEl("jLevelF").hidden=S.mode==="doi";jEl("jFixedL").hidden=S.mode!=="doi";
-  jEl("jModeInfo").textContent=S.mode==="doi"?`${PN[1]} (piesele albe) și ${PN[2]} (piesele negre) mută pe rând.${S.fixedBoard===true?"":" Tabla se întoarce spre cel la mutare."}`:"Joci contra botului, cu notă pentru fiecare mutare.";
+  jEl("jModeInfo").textContent=S.mode==="doi"?`${PN[1]} (piesele albe) și ${PN[2]} (piesele negre) mută pe rând.${S.fixedBoard===true?"":" Tabla se întoarce spre cel la mutare."}`:"";
   const c=jEl("jDice3d");c.checked=S.dice3d!==false&&DICE3D.available();c.disabled=!DICE3D.available();}
 document.querySelectorAll("#jLevel .pill").forEach(b=>b.addEventListener("click",()=>{S.botLevel=b.dataset.l;save();renderLevel();}));
 document.querySelectorAll("#jMode .pill").forEach(b=>b.addEventListener("click",()=>{const m=b.dataset.m==="doi"?"doi":"bot";if((S.mode==="doi"?"doi":"bot")===m)return;S.mode=m;save();newGame();}));
@@ -2170,8 +2181,8 @@ function renderGnuStatus(){if(typeof G!=="undefined"&&G.phase==="move")renderJ()
 /* ================= RAPORT ================= */
 let RP={i:null};
 function renderReport(){const box=jEl("rpBody");const hist=G.hist;
-  if(G.two){box.innerHTML=`<div class="card stack"><p>Raportul e doar pentru meciurile contra botului.</p><a class="btn gold" href="#joc">Înapoi la joc</a></div>`;return;}
-  if(!hist.length){box.innerHTML=`<div class="card stack"><p>Încă nu ai jucat un meci în sesiunea asta.</p><a class="btn gold" href="#joc">Joacă acum</a></div>`;return;}
+  if(G.two){box.innerHTML=`<div class="card stack"><p>Raportul e doar pentru meciurile contra botului.</p><div class="row"><a class="btn gold" href="#joc">Înapoi la joc</a></div></div>`;return;}
+  if(!hist.length){box.innerHTML=`<div class="card stack"><p>Încă nu ai jucat un meci în sesiunea asta.</p><div class="row"><a class="btn gold" href="#joc">Joacă acum</a></div></div>`;return;}
   const acc=accuracy(hist);const mine=hist.filter(h=>h.who==="you");
   const counts=[...CLS,FORCED,HINT].map(c=>[c,mine.filter(h=>h.cls.id===c.id).length]).filter(([c,n])=>c!==HINT||n);
   const C=2*Math.PI*44;
@@ -2228,6 +2239,13 @@ document.addEventListener("click",e=>{const b=e.target.closest(".fsbtn");if(!b)r
 window.addEventListener("resize",()=>{if(!FSV.busy)fsFit();});
 ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!(document.fullscreenElement||document.webkitFullscreenElement))fsExit();else fsFit();}));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&FSV.view)fsExit();});
+// ochiul: ascunde analiza ca să rămână doar tabla; ținut minte între sesiuni
+function setLean(on,anim=true){const v=document.getElementById("v-joc"),b=jEl("jEye"),t=on?"Arată analiza":"Ascunde analiza";clearTimeout(setLean.t);
+  b.setAttribute("aria-pressed",on);b.title=t;b.setAttribute("aria-label",t);
+  if(on){v.classList.add("nox");if(!anim||reduce)v.classList.add("lean");else setLean.t=setTimeout(()=>{v.classList.add("lean");fsFit();},230);}
+  else{v.classList.remove("lean");void v.offsetWidth;v.classList.remove("nox");fsFit();}}
+jEl("jEye").addEventListener("click",()=>{S.lean=!S.lean;save();setLean(S.lean);});
+setLean(S.lean===true,false);
 document.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey||(e.target.closest&&e.target.closest("input,textarea")))return;
   const k=e.key.toLowerCase(),v=location.hash.slice(1);const M=v==="joc"&&G.phase==="move"?JM:v==="quiz"&&!Q.done?QM:null;if(!M)return;
   if(k==="z"&&!e.shiftKey){e.preventDefault();if((M===JM?G:Q).steps.length)SFX.undo();M.undo();}else if(k==="y"||(k==="z"&&e.shiftKey)){e.preventDefault();M.redo();}});
