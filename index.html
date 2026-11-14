@@ -529,13 +529,16 @@ body.fsOn .fsbtn .ex{display:block}
 <!-- ============ JOC ============ -->
 <section class="view" id="v-joc" hidden>
   <header class="phead">
-    <h1>Contra botului</h1>
+    <h1 id="jTitle">Contra botului</h1>
     <button class="btn ghost small" type="button" id="jNew">Joc nou</button>
   </header>
   <details class="acc" id="jSettings">
     <summary><span class="t"><h3>Setări</h3><small id="jSetSum"></small></span></summary>
     <div class="body">
-      <div class="field"><span class="flabel">Nivelul botului</span>
+      <div class="field"><span class="flabel">Adversar</span>
+        <div class="pills" id="jMode" role="group" aria-label="Adversar"><button class="pill" type="button" data-m="bot">Botul</button><button class="pill" type="button" data-m="doi">Doi jucători, un dispozitiv</button></div>
+        <p class="hint" id="jModeInfo"></p></div>
+      <div class="field" id="jLevelF"><span class="flabel">Nivelul botului</span>
         <div class="pills" id="jLevel" role="group" aria-label="Nivelul botului"><button class="pill" type="button" data-l="incepator">Începător</button><button class="pill" type="button" data-l="usor">Ușor</button><button class="pill" type="button" data-l="mediu">Mediu</button><button class="pill" type="button" data-l="greu">Greu</button><button class="pill" type="button" data-l="expert">Expert</button></div>
         <p class="hint" id="jLevelInfo"></p></div>
       <div class="field"><label class="toggle"><input type="checkbox" id="jDice3d"> Zaruri 3D, aruncate cu mâna</label>
@@ -548,7 +551,7 @@ body.fsOn .fsbtn .ex{display:block}
     </div>
   </details>
   <div class="card stack">
-    <div class="evalbar" aria-label="Șanse de câștig"><span class="evl"><i class="dot you"></i>Tu <b id="evYou">50%</b></span><div class="evtrack"><i id="evFill" style="width:50%"></i></div><span class="evl"><b id="evBot">50%</b> Bot<i class="dot opp"></i></span></div>
+    <div class="evalbar" aria-label="Șanse de câștig"><span class="evl"><i class="dot you"></i><span id="evLY">Tu</span> <b id="evYou">50%</b></span><div class="evtrack"><i id="evFill" style="width:50%"></i></div><span class="evl"><b id="evBot">50%</b> <span id="evLB">Bot</span><i class="dot opp"></i></span></div>
     <div class="toolbar"><span class="dice big" id="jDice"></span><div class="row"><div class="row" id="jCtl"></div><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div>
     <div class="boardwrap" id="jWrap"><svg class="board" id="jBoard" viewBox="0 0 552 424" role="img" aria-label="Tabla de joc"></svg><button class="tapdice" id="jTap" type="button" hidden aria-label="Aruncă zarurile"><span class="dice" id="jTapDice"></span><span class="taphint">Atinge zarurile</span></button></div>
     <p class="jstatus" id="jStatus"></p>
@@ -556,7 +559,7 @@ body.fsOn .fsbtn .ex{display:block}
   <div id="jFb"></div>
   <div id="jOver" hidden></div>
   <div class="stack sm" id="jLogBox" hidden>
-    <div class="row between"><h3>Mutări</h3><a class="link" href="#raport">Raport complet</a></div>
+    <div class="row between"><h3>Mutări</h3><a class="link" href="#raport" id="jRpLink">Raport complet</a></div>
     <div class="jlog" id="jLog"></div>
   </div>
   <p class="credit">Zar 3D: <a href="https://sketchfab.com/3d-models/dice-5d621181da7d457885e642b607120639" target="_blank" rel="noopener">„Dice”</a> de juliov.cg, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Motor de analiză: GNU Backgammon.</p>
@@ -795,8 +798,9 @@ function defs(svg){
   el("path",{d:"M0,0 L10,5 L0,10 z",fill:"#ead08f"},mk);
 }
 // piesă cel-shaded: umbră tare, grosime (margine), față plată cu semilună mai închisă; lift = cât e ridicată
+function ckWho(svg,who){return svg&&svg.dataset&&svg.dataset.swap?(who==="you"?"opp":"you"):who;}
 function checker(parent,svgId,x,y,who,r=R-.5,extra={},lift=0){
-  const c=CK[who],g=el("g",Object.assign({class:"ck"},extra),parent),sw=r<15?1.1:1.4;
+  const c=CK[ckWho(parent.ownerSVGElement||parent,who)],g=el("g",Object.assign({class:"ck"},extra),parent),sw=r<15?1.1:1.4;
   el("ellipse",{class:"ck-sh",cx:x+2+lift*.5,cy:y+3.5+lift*.9,rx:r+(lift?2:0),ry:r*.92+(lift?1.5:0),fill:"#000","fill-opacity":lift?".2":".3"},g);
   y-=lift;
   el("ellipse",{class:"ck-side",cx:x,cy:y+r*.2,rx:r,ry:r*.96,fill:c.side,stroke:INK,"stroke-width":sw},g);
@@ -848,7 +852,7 @@ function drawBoard(svg,pos,opt={}){
         if(top&&who==="you"&&(opt.hintFrom||[]).includes(n))el("circle",{class:"hintring",cx:s.x,cy:s.y-(sel?6:0),r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
         checker(svg,id,s.x,s.y,who,R-.5,Object.assign({"data-n":n,"data-w":who},top&&(opt.land||[]).includes(n)?{class:"ck land"}:{}),sel?6:0);
       }
-      if(c>5){const s=slot(n,c-1,c),up=who==="you"&&opt.selected===n?6:0;const tx=el("text",{x:s.x,y:s.y+4.5-up,"text-anchor":"middle","font-size":"13","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:who==="you"?"#4a3d27":"#efe7d4"},svg);tx.textContent=c;}
+      if(c>5){const s=slot(n,c-1,c),up=who==="you"&&opt.selected===n?6:0;const tx=el("text",{x:s.x,y:s.y+4.5-up,"text-anchor":"middle","font-size":"13","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:ckWho(svg,who)==="you"?"#4a3d27":"#efe7d4"},svg);tx.textContent=c;}
     });
   }
 
@@ -861,8 +865,8 @@ function drawBoard(svg,pos,opt={}){
     const top=who==="opp",step=9.6,gy=top?ty+4:ty+PH-4-8.4;
     for(let k=0;k<cnt;k++){const y=top?gy+k*step:gy-k*step,tp=el("g",{class:"tp","data-w":who},svg);
       el("rect",{x:TX+2.5,y:y+1.5,width:TW-5,height:8.4,rx:3,fill:"#000","fill-opacity":".45"},tp);
-      el("rect",{x:TX+2.5,y,width:TW-5,height:8.4,rx:3,fill:CK[who].face,stroke:INK,"stroke-width":".9"},tp);
-      el("rect",{x:TX+3.2,y:y+5.6,width:TW-6.4,height:2.2,rx:1,fill:CK[who].side},tp);}
+      el("rect",{x:TX+2.5,y,width:TW-5,height:8.4,rx:3,fill:CK[ckWho(svg,who)].face,stroke:INK,"stroke-width":".9"},tp);
+      el("rect",{x:TX+3.2,y:y+5.6,width:TW-6.4,height:2.2,rx:1,fill:CK[ckWho(svg,who)].side},tp);}
     if(cnt){const ly=top?ty+4+cnt*step+11:ty+PH-4-cnt*step-4;
       const t=el("text",{x:TX+TW/2,y:ly,"text-anchor":"middle","font-size":"11","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:who==="you"?"#efe7d4":"#9aab9f"},svg);t.textContent=cnt;}
   });
@@ -1819,6 +1823,11 @@ const HINT={id:"hint",ro:"Cu hint",sym:"H",col:"#c9a55a"};
 function classify(loss,nOpts){if(nOpts<=1)return FORCED;return CLS.find(c=>loss<=c.max);}
 
 /* ================= JOC CONTRA BOTULUI ================= */
+// doi jucători pe un dispozitiv: cel la mutare e mereu „tu” (poziția se oglindește la fiecare tură),
+// iar pe tura lui Abanos tabla își schimbă culorile, ca fiecare să-și vadă piesele lui
+const PN={1:"Fildeș",2:"Abanos"};
+function mirrorPos(q){const p=Array(25).fill(0),o=Array(25).fill(0);for(let i=1;i<=24;i++){p[i]=q.o[25-i];o[i]=q.p[25-i];}return{p,o,pBar:q.oBar,oBar:q.pBar,pOff:q.oOff,oOff:q.pOff};}
+function setView(){const b=jEl("jBoard");if(G.two&&G.cur===2)b.dataset.swap="1";else delete b.dataset.swap;}
 const G={pos:null,turn:null,phase:"idle",dice:null,seqs:[],max:0,steps:[],turnStart:null,sel:null,hist:[],level:"mediu",pYou:.5,over:null,drag:null,anim:false,lastMv:null};
 function fromCanon(x,side){const p=Array(25).fill(0),o=Array(25).fill(0);
   if(side==="you"){for(let i=1;i<=24;i++){p[i]=x.a[i];o[i]=x.b[25-i];}return{p,o,pBar:x.a[25],pOff:x.a[0],oBar:x.b[25],oOff:x.b[0]};}
@@ -1835,12 +1844,12 @@ function toAnim(seq,who){return seq.map(([s,t,d])=>who==="you"?["y",s,t,d]:["o",
 function jEl(id){return document.getElementById(id);}
 
 function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,{},cb);}
-function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();END.clear();Object.assign(G,{gameTok:(G.gameTok||0)+1,busy:false,evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null});setEval(.5);
+function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();END.clear();Object.assign(G,{gameTok:(G.gameTok||0)+1,busy:false,evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null,two:S.mode==="doi",cur:1,hintsP:{1:3,2:3}});setView();renderMode();setEval(.5);
   jBoardDraw();renderJ();jEl("jFb").innerHTML="";jEl("jLog").innerHTML="";jEl("jOver").hidden=true;
   setStatus("Aruncați câte un zar. Cine dă mai mare începe.");offerRoll(600);}
 function setStatus(t){jEl("jStatus").innerHTML=t;}
 function evalShow(p,tok){if(tok===G.evalTok)setEval(p);}
-function evalAfter(pos,side,d,key,fallback){const tok=++G.evalTok,mine=q=>side==="you"?q:1-q;
+function evalAfter(pos,side,d,key,fallback){const tok=++G.evalTok,fl=G.two&&G.cur===2,mine=q=>{const v=side==="you"?q:1-q;return fl?1-v:v;};
   if(GNU.status()!=="ready"){setEval(mine(fallback));return;}
   gnuAnalyze(pos,side,d[0],d[1]).then(list=>{const m=list&&list.find(e=>e.key===key);evalShow(mine(m?m.win:fallback),tok);});}
 function setEval(p){G.pYou=p;const pc=Math.round(p*100);jEl("evFill").style.width=pc+"%";jEl("evYou").textContent=pc+"%";jEl("evBot").textContent=(100-pc)+"%";}
@@ -1875,24 +1884,34 @@ async function useHint(){if(G.phase!=="move"||G.anim||G.hintBusy||GNU.status()!=
   renderJ();if(!G.anim)jBoardDraw();}
 async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";
   const tok=G.gameTok,d3=S.dice3d!==false&&DICE3D.available();let a,b;
-  if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:["Tu"],text:S.autoRoll===true?"":"Aruncă zarul tău"});if(tok!==G.gameTok)return;
-    setStatus(`Ai dat <b>${a}</b>. Acum aruncă botul…`);
-    [b]=await DICE3D.throwDice({keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
+  const two=G.two,LA=two?PN[1]:"Tu",LB=two?PN[2]:"Bot";
+  if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:[LA],text:S.autoRoll===true?"":two?`Aruncă, ${PN[1]}`:"Aruncă zarul tău"});if(tok!==G.gameTok)return;
+    setStatus(two?`${PN[1]} a dat <b>${a}</b>. Acum aruncă ${PN[2]}.`:`Ai dat <b>${a}</b>. Acum aruncă botul…`);
+    [b]=await DICE3D.throwDice(two?{keep:true,side:"you",auto:S.autoRoll===true,slots:[1],tints:["bot"],keepOthers:true,labels:[LB],text:S.autoRoll===true?"":`Aruncă, ${PN[2]}`}:{keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
     setTimeout(()=>DICE3D.clear(),a===b?700:1100);}
   else{SFX.roll();a=rollDie();await new Promise(r=>setTimeout(r,250));b=rollDie();if(tok!==G.gameTok)return;}
   G.busy=false;renderJ();
-  jEl("jDice").innerHTML=`<span class="oroll"><small>Tu</small>${dieSVG(a,"roll")}</span><span class="oroll"><small>Bot</small>${dieSVG(b,"roll")}</span>`;
+  jEl("jDice").innerHTML=`<span class="oroll"><small>${LA}</small>${dieSVG(a,"roll")}</span><span class="oroll"><small>${LB}</small>${dieSVG(b,"roll")}</span>`;
   if(a===b){setStatus(`Egalitate (${a}-${b}). Mai aruncați o dată.`);offerRoll(1100);return;}
   G.phase="wait";jEl("jCtl").innerHTML="";
-  setTimeout(()=>{if(tok!==G.gameTok)return;if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
+  setTimeout(()=>{if(tok!==G.gameTok)return;
+    if(two){const w=a>b?1:2;if(w===2){G.cur=2;G.pos=mirrorPos(G.pos);setView();}setStatus(`<b>Începe ${PN[w]}</b> cu ${Math.max(a,b)}-${Math.min(a,b)}.`);startYourTurn(w===1?[a,b]:[b,a]);return;}
+    if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
     else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},450);}
-async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const tok=G.gameTok;const d=await rollPair({side:"you",auto:S.autoRoll===true});if(tok!==G.gameTok)return;G.busy=false;startYourTurn(d);}
+async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const tok=G.gameTok;const d=await rollPair({side:"you",auto:S.autoRoll===true,tints:G.two&&G.cur===2?["bot","bot"]:undefined});if(tok!==G.gameTok)return;G.busy=false;startYourTurn(d);}
 function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;G.turnHinted=false;G.hint=null;
   const max=JM.begin(G.pos,d[0],d[1]);
-  if(max===0){G.phase="wait";renderJ();setStatus(`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
-    G.hist.push({who:"you",dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();const tok=G.gameTok;setTimeout(()=>{if(tok===G.gameTok)botTurn();},1400);return;}
+  if(max===0){G.phase="wait";renderJ();setStatus(G.two?`${PN[G.cur]} are ${d[0]}-${d[1]} și <b>nu poate muta</b>.`:`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
+    G.hist.push({who:"you",pl:G.cur,dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();const tok=G.gameTok;setTimeout(()=>{if(tok===G.gameTok)(G.two?nextPlayer:botTurn)();},1400);return;}
   G.phase="move";renderJ();jBoardDraw();
-  setStatus(G.pos.pBar?"Ești pe bară: intră întâi cu piesa de pe bară.":"Rândul tău.");}
+  setStatus(G.pos.pBar?(G.two?`${PN[G.cur]}, ești pe bară: intră întâi cu piesa de pe bară.`:"Ești pe bară: intră întâi cu piesa de pe bară."):G.two?`Rândul lui <b>${PN[G.cur]}</b>.`:"Rândul tău.");}
+// doi jucători: după mutare, tabla se întoarce spre celălalt jucător (oglindă + culorile lui)
+function nextPlayer(){const tok=G.gameTok;if(G.phase==="over")return;
+  const last=(G.steps||[]).map(m=>m[1]).filter(t=>t>=1&&t<=24).map(t=>25-t);
+  G.hintsP[G.cur]=G.hints;G.cur=3-G.cur;G.hints=G.hintsP[G.cur];G.pos=mirrorPos(G.pos);G.steps=[];G.sel=null;G.hint=null;G.lastMv=[...new Set(last)];
+  setView();G.phase="roll";G.dice=null;DICE3D.clear();renderJ();jBoardDraw();
+  if(!reduce)jEl("jBoard").animate([{opacity:.35},{opacity:1}],{duration:260,easing:"ease-out"});
+  setStatus(`Rândul lui <b>${PN[G.cur]}</b>.`);if(tok===G.gameTok)offerRoll(250);}
 const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,extra:hintOpt,
   onComplete:()=>{if(S.autoOk!==false)setTimeout(()=>{if(G.phase==="move"&&G.steps.length===G.max&&!G.anim)confirmMove();},280);}});
 function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
@@ -1907,20 +1926,22 @@ function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
   else cls=classify(loss,opts.length);
   if(myKey===ENG.key(ENG.apply(x0,bestSeq))){cls=opts.length<=1?FORCED:CLS[0];loss=0;}
   if(G.turnHinted){cls=HINT;loss=0;}
-  const h={who:"you",dice:d,before:clone(G.turnStart),seq:G.steps.slice(),cls,loss,bestSeq,not:fmtSeq(x0,G.steps),bestNot:fmtSeq(x0,bestSeq),nOpts:opts.length,hint:G.turnHinted};
+  const h={who:"you",pl:G.cur,dice:d,before:clone(G.turnStart),seq:G.steps.slice(),cls,loss,bestSeq,not:fmtSeq(x0,G.steps),bestNot:fmtSeq(x0,bestSeq),nOpts:opts.length,hint:G.turnHinted};
   const useGnu=GNU.status()==="ready"&&opts.length>1&&!G.turnHinted;
   G.hist.push(h);logRender();
+  const fl=G.two&&G.cur===2,P1=v=>fl?1-v:v;
   const evTok=useGnu?++G.evalTok:0;if(!useGnu)evalAfter(h.before,"you",d,myKey,myP);
   if(useGnu)jEl("jFb").innerHTML="";else showMoveBadge(h);
   G.phase="wait";renderJ();jBoardDraw();
   if(checkOver())return;
   if(useGnu){h.pending=true;
-    gnuAnalyze(h.before,"you",d[0],d[1]).then(list=>{h.pending=false;if(!list){evalShow(myP,evTok);showMoveBadge(h);return;}
+    gnuAnalyze(h.before,"you",d[0],d[1]).then(list=>{h.pending=false;if(!list){evalShow(P1(myP),evTok);showMoveBadge(h);return;}
       const me=list.find(m=>m.key===myKey)||list[list.length-1];const top=list[0];
       h.loss=Math.max(0,-me.diff*100);h.cls=classifyEq(h.loss,list.length);h.bestSeq=top.seq;h.bestNot=fmtSeq(x0,top.seq);h.src="gnu";h.eq=me.eq;
       if(h.cls.id==="best")h.loss=0;
-      evalShow(me.win,evTok);logRender();if(G.hist[G.hist.length-1]===h||G.hist[G.hist.length-2]===h)showMoveBadge(h);});}
-  const tok=G.gameTok;setTimeout(()=>{if(tok===G.gameTok)botTurn();},250);}
+      evalShow(P1(me.win),evTok);logRender();if(G.hist[G.hist.length-1]===h||G.hist[G.hist.length-2]===h)showMoveBadge(h);});}
+  const tok=G.gameTok;if(G.two){setTimeout(()=>{if(tok===G.gameTok)nextPlayer();},900);return;}
+  setTimeout(()=>{if(tok===G.gameTok)botTurn();},250);}
 function showMoveBadge(h){const c=h.cls;
   jEl("jFb").innerHTML=`<div class="mvbadge" style="--c:${c.col}"><span class="mvsym">${c.sym}</span><div><b>${c.ro}</b><span class="mono">${h.not}</span>${h.loss>0.5&&c.id!=="forced"?`<small>Mai bună: <span class="mono">${h.bestNot}</span></small>`:""}</div></div>`;}
 async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";renderJ();
@@ -2034,7 +2055,7 @@ const END=(()=>{
   // kind: win | mart | bg | mt | lt | lose
   async function play(kind,title,sub,pts,win){clear();const t0=tok,wrap=jEl("jWrap");
     svgEnd=el("svg",{id:"jEnd",class:"board endfx",viewBox:"0 0 552 424","aria-hidden":"true"});wrap.insertBefore(svgEnd,jEl("jTap"));
-    drawBoard(svgEnd,G.pos,{});const root=el("g",{},svgEnd);[...svgEnd.children].forEach(ch=>{if(ch!==root&&ch.tagName!=="defs")root.appendChild(ch);});
+    if(jEl("jBoard").dataset.swap)svgEnd.dataset.swap="1";drawBoard(svgEnd,G.pos,{});const root=el("g",{},svgEnd);[...svgEnd.children].forEach(ch=>{if(ch!==root&&ch.tagName!=="defs")root.appendChild(ch);});
     const L={root,fx:el("g",{},root),dim:el("rect",{x:0,y:0,width:552,height:424,rx:18,fill:"#000","fill-opacity":0},root),top:el("g",{},root),plaque:el("g",{},root),
       pieces:who=>[...root.querySelectorAll(`.ck[data-w="${who}"]`)].map(piece)};
     try{await RUN[kind](L);if(live(t0))await plaque(L,title,sub,pts,win);}catch(e){console.error(e);}}
@@ -2044,7 +2065,13 @@ function checkOver(){const tY=techWin(G.pos,"you"),tB=tY?null:techWin(G.pos,"bot
   const you=G.pos.pOff===15||!!tY,bot=G.pos.oOff===15||!!tB;if(!you&&!bot)return false;
   let pts=1;if(tech)pts=tech.pts;else if(you){if(G.pos.oOff===0){pts=2;let bg=G.pos.oBar>0;for(let i=1;i<=6;i++)if(G.pos.o[i])bg=true;if(bg)pts=3;}}
   else{if(G.pos.pOff===0){pts=2;let bg=G.pos.pBar>0;for(let i=19;i<=24;i++)if(G.pos.p[i])bg=true;if(bg)pts=3;}}
-  G.over={win:you,pts};G.phase="over";renderJ();++G.evalTok;setEval(you?1:0);
+  G.over={win:you,pts};G.phase="over";renderJ();++G.evalTok;
+  if(G.two){const w=you?G.cur:3-G.cur;setEval(w===1?1:0);G.over.pl=w;
+    const k2=tech?(tech.pts===3?"mt":"lt"):pts===3?"bg":pts===2?"mart":"win",n2={mt:"Marț tehnic",lt:"Linie tehnică",bg:"Backgammon",mart:"Marț",win:`Câștigă ${PN[w]}`}[k2],pw2=pts===1?"1 punct":pts+" puncte";
+    END.play(you?k2:"lose",n2,k2==="win"?pw2:`${PN[w]} · ${pw2}`,pts,you);
+    jEl("jOver").hidden=false;jEl("jOver").innerHTML=`<div class="toast ok overrow"><p>Câștigă <b>${PN[w]}</b>, ${pw2}.</p><div class="row"><button class="btn gold" type="button" id="jAgain">Joc nou</button></div></div>`;
+    jEl("jAgain").addEventListener("click",newGame);SFX.win();setStatus(`Felicitări, ${PN[w]}!`);return true;}
+  setEval(you?1:0);
   const acc=accuracy(G.hist),xp=you?25:10;touchDay();addXP(xp);
   S.games=(S.games||[]).concat([{d:today(),w:you?1:0,pts,acc:acc==null?null:Math.round(acc)}]).slice(-20);save();
   const kind=tech?(tech.pts===3?"mt":"lt"):pts===3?"bg":pts===2?"mart":"win",name={mt:"Marț tehnic",lt:"Linie tehnică",bg:"Backgammon",mart:"Marț",win:"Ai câștigat"}[kind];
@@ -2058,13 +2085,18 @@ function checkOver(){const tY=techWin(G.pos,"you"),tB=tY?null:techWin(G.pos,"bot
   return true;}
 function accuracy(hist){const m=hist.filter(h=>h.who==="you"&&h.cls&&h.cls.id!=="forced"&&h.cls.id!=="hint");if(!m.length)return null;return m.reduce((s,h)=>s+Math.max(0,100-4*h.loss),0)/m.length;}
 function prOf(hist){const m=hist.filter(h=>h.who==="you"&&h.src==="gnu"&&h.cls.id!=="forced"&&h.cls.id!=="hint");if(!m.length)return null;return m.reduce((s,h)=>s+h.loss,0)/m.length*5;}
-function logRender(){jEl("jLogBox").hidden=!G.hist.length;jEl("jLog").innerHTML=G.hist.map((h,i)=>h.who==="you"?`<span class="lg you" style="--c:${h.cls.col}" title="${h.cls.ro}"><i>${h.cls.sym}</i>${h.dice[0]}-${h.dice[1]} <span class="mono">${h.not}</span></span>`:`<span class="lg bot">${h.dice[0]}-${h.dice[1]} <span class="mono">${h.not}</span></span>`).join("");
+function logRender(){jEl("jLogBox").hidden=!G.hist.length;jEl("jLog").innerHTML=G.hist.map((h,i)=>h.who==="you"?`<span class="lg you" style="--c:${h.cls.col}" title="${G.two?PN[h.pl]+": ":""}${h.cls.ro}">${G.two?`<span class="dot ${h.pl===2?"opp":"you"}"></span>`:""}<i>${h.cls.sym}</i>${h.dice[0]}-${h.dice[1]} <span class="mono">${h.not}</span></span>`:`<span class="lg bot">${h.dice[0]}-${h.dice[1]} <span class="mono">${h.not}</span></span>`).join("");
   const l=jEl("jLog");l.scrollLeft=l.scrollWidth;}
 const LVINFO={incepator:"Mută la întâmplare.",usor:"Greșește des.",mediu:"Joacă bine, cu mici greșeli.",greu:"Motorul GNU, cu mici variații.",expert:"Motorul GNU la putere maximă."};
 const LVNAME={incepator:"Începător",usor:"Ușor",mediu:"Mediu",greu:"Greu",expert:"Expert"};
-function renderLevel(){G.level=S.botLevel||G.level;document.querySelectorAll("#jLevel .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.l===G.level));jEl("jLevelInfo").textContent=LVINFO[G.level];jEl("jSetSum").textContent=`Bot ${LVNAME[G.level].toLowerCase()}`;
+function renderLevel(){G.level=S.botLevel||G.level;document.querySelectorAll("#jLevel .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.l===G.level));jEl("jLevelInfo").textContent=LVINFO[G.level];jEl("jSetSum").textContent=S.mode==="doi"?"Doi jucători":`Bot ${LVNAME[G.level].toLowerCase()}`;
+  document.querySelectorAll("#jMode .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===(S.mode==="doi"?"doi":"bot")));jEl("jLevelF").hidden=S.mode==="doi";
+  jEl("jModeInfo").textContent=S.mode==="doi"?`${PN[1]} (piesele albe) și ${PN[2]} (piesele negre) mută pe rând. Tabla se întoarce spre cel la mutare.`:"Joci contra botului, cu notă pentru fiecare mutare.";
   const c=jEl("jDice3d");c.checked=S.dice3d!==false&&DICE3D.available();c.disabled=!DICE3D.available();}
 document.querySelectorAll("#jLevel .pill").forEach(b=>b.addEventListener("click",()=>{S.botLevel=b.dataset.l;save();renderLevel();}));
+document.querySelectorAll("#jMode .pill").forEach(b=>b.addEventListener("click",()=>{const m=b.dataset.m==="doi"?"doi":"bot";if((S.mode==="doi"?"doi":"bot")===m)return;S.mode=m;save();newGame();}));
+// titlul, eticheta barei de șanse și linkul spre raport, după modul meciului curent
+function renderMode(){jEl("jTitle").textContent=G.two?"Doi jucători":"Contra botului";jEl("evLY").textContent=G.two?PN[1]:"Tu";jEl("evLB").textContent=G.two?PN[2]:"Bot";jEl("jRpLink").hidden=G.two;}
 jEl("jDice3d").addEventListener("change",e=>{S.dice3d=e.target.checked;save();renderJ();if(!jEl("jTap").hidden||!G.busy){hideTap();offerRoll(100);}});
 jEl("jMartT").checked=S.martTehnic===true;jEl("jMartT").addEventListener("change",e=>{S.martTehnic=e.target.checked;save();});
 jEl("jLinieT").checked=S.linieTehnica===true;jEl("jLinieT").addEventListener("change",e=>{S.linieTehnica=e.target.checked;save();});
@@ -2129,6 +2161,7 @@ function renderGnuStatus(){if(typeof G!=="undefined"&&G.phase==="move")renderJ()
 /* ================= RAPORT ================= */
 let RP={i:null};
 function renderReport(){const box=jEl("rpBody");const hist=G.hist;
+  if(G.two){box.innerHTML=`<div class="card stack"><p>Raportul e doar pentru meciurile contra botului.</p><a class="btn gold" href="#joc">Înapoi la joc</a></div>`;return;}
   if(!hist.length){box.innerHTML=`<div class="card stack"><p>Încă nu ai jucat un meci în sesiunea asta.</p><a class="btn gold" href="#joc">Joacă acum</a></div>`;return;}
   const acc=accuracy(hist);const mine=hist.filter(h=>h.who==="you");
   const counts=[...CLS,FORCED,HINT].map(c=>[c,mine.filter(h=>h.cls.id===c.id).length]).filter(([c,n])=>c!==HINT||n);

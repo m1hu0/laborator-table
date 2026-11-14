@@ -1,6 +1,6 @@
 # Laboratorul de Table
 
-Aplicație web de antrenament la table (backgammon), în română: joc contra botului cu analiză GNU Backgammon,
+Aplicație web de antrenament la table (backgammon), în română: joc contra botului cu analiză GNU Backgammon sau în doi pe același dispozitiv,
 quiz de deschideri (inclusiv dubluri), pip count, lecții interactive, glosar, zaruri 3D, sunete.
 Se publică pe GitHub Pages și se instalează ca aplicație (PWA) pe tabletă, telefon și laptop.
 
