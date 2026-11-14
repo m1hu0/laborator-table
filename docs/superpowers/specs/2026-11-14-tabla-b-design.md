@@ -33,7 +33,7 @@ Adânciturile au rotunjirea 12. Marginea exterioară are 12 + 18 = 30, deci rama
 ### Texturi foto
 - Sursa sunt trei texturi CC0 de pe ambientCG: Leather037, Leather039, Fabric034.
 - Relieful e luat din harta de normale, luminat din stânga-sus și nuanțat cu culorile tablei.
-- Rezultă 5 plăci de 512 px, desenate la 160 de unități: `tex/rail.jpg` (ramă), `tex/cream.jpg`, `tex/red.jpg`, `tex/felt.jpg`, `tex/tray.jpg`.
+- Rezultă 5 plăci de 512 px, desenate la 200 de unități (aproape 1:1 pe ecran, ca să rămână clare); relieful trece printr-un filtru care scoate petele mari (rotunde): `tex/rail.jpg` (ramă), `tex/cream.jpg`, `tex/red.jpg`, `tex/felt.jpg`, `tex/tray.jpg`.
 - Plăcile se generează o singură dată și intră în proiect; arhivele originale nu.
 - Se adaugă în `FILES` din `sw.js`, iar `V` crește.
 
