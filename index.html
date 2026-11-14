@@ -2,7 +2,7 @@
 <html lang="ro"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f2620">
-<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <title>Laboratorul de Table</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -391,14 +391,16 @@ body.fsOn{overflow:hidden}
 body.fsOn .fsbtn .en{display:none}
 body.fsOn .fsbtn .ex{display:block}
 .view.fs{position:fixed;inset:0;z-index:60;overflow-y:auto;overscroll-behavior:contain;max-width:none;
-  padding:max(10px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
   background:radial-gradient(70% 55% at 50% -5%,rgba(255,214,150,.1),transparent 70%),linear-gradient(180deg,var(--felt-hi),var(--felt) 40%,var(--felt-lo))}
 .view.fs>.phead,.view.fs>details,.view.fs>.credit{display:none}
-.view.fs>.card{width:100%;max-width:1400px;margin:0 auto}
+.view.fs>.card{width:100%;height:100%;max-width:none;margin:0;padding:4px;background:none;border:0;border-radius:0;box-shadow:none;row-gap:6px}
+.view.fs>#jFb,.view.fs>#jLogBox{display:none}
+.view.fs>.card:not(.fsside){justify-content:center}
 .view.fs .card>.boardwrap{max-width:none;min-width:0}
-.card.fsside{display:grid;grid-template-columns:minmax(0,1fr) var(--fscol,220px);column-gap:16px;row-gap:12px;align-content:start}
+.card.fsside{display:grid;grid-template-columns:minmax(0,1fr) var(--fscol,220px);column-gap:10px;row-gap:10px;align-content:center}
 .card.fsside>*{grid-column:2;min-width:0}
-.card.fsside>.boardwrap{grid-column:1;grid-row:1 / span 12;margin:0 auto;align-self:start}
+.card.fsside>.boardwrap{grid-column:1;grid-row:1 / span 12;margin:0 auto;align-self:center}
 .card.fsside .evalbar{grid-template-columns:auto minmax(0,1fr) auto;font-size:12.5px}
 .card.fsside .toolbar{flex-direction:column;align-items:flex-start}
 @media (prefers-reduced-motion:no-preference){.view.fs{animation:fadein .2s ease}}
@@ -544,6 +546,7 @@ body.fsOn .fsbtn .ex{display:block}
       <div class="field"><label class="toggle"><input type="checkbox" id="jDice3d"> Zaruri 3D, aruncate cu mâna</label>
         <label class="toggle"><input type="checkbox" id="jAuto"> Confirmă automat mutarea</label>
         <label class="toggle"><input type="checkbox" id="jAutoRoll"> Aruncă automat zarurile când e rândul meu</label>
+        <label class="toggle" id="jFixedL"><input type="checkbox" id="jFixed"> Tabla nu se întoarce după fiecare mutare (stați față în față)</label>
         <label class="toggle"><input type="checkbox" id="jSound"> Sunete</label>
         <label class="toggle"><input type="checkbox" id="jMartT"> Marț tehnic: câte 2 piese pe fiecare punct din casă, 3 puncte</label>
         <label class="toggle"><input type="checkbox" id="jLinieT"> Linie tehnică: câte o piesă pe fiecare punct din casă, 2 puncte</label></div>
@@ -780,7 +783,10 @@ const NS="http://www.w3.org/2000/svg";
 const PW=38,X0=14,HALF=228,BARW=28,TOP=22,BOT=402,PH=162,R=17;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function px(n){const idx=n>=13?n-13:12-n;const half=idx<6?0:1;return X0+half*(HALF+BARW)+(idx%6)*PW+PW/2;}
-function isTop(n){return n>=13;}
+// FLIP: tabla văzută din partea cealaltă a mesei (doi jucători, tabla fixă): aceleași coloane, sus și jos inversate
+let FLIP=false;function setFlip(svg){FLIP=!!(svg&&svg.dataset&&svg.dataset.flip);}
+function fy(y){return FLIP?TOP+BOT-y:y;}
+function isTop(n){return (n>=13)!==FLIP;}
 function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
 function spacing(c){return c<=5?R*2:Math.min(R*2,(PH-R*2)/(c-1));}
 function slot(n,k,count){const sp=spacing(count);return{x:px(n),y:isTop(n)?TOP+R+1+k*sp:BOT-R-1-k*sp};}
@@ -810,7 +816,7 @@ function checker(parent,svgId,x,y,who,r=R-.5,extra={},lift=0){
   return g;
 }
 function drawBoard(svg,pos,opt={}){
-  svg.innerHTML="";defs(svg);const id=svg.id;
+  setFlip(svg);svg.innerHTML="";defs(svg);const id=svg.id;
   // rama de nuc: bandă luminată sus, umbrită jos
   el("rect",{x:1,y:1,width:550,height:422,rx:18,fill:"#33231a",stroke:INK,"stroke-width":"2"},svg);
   el("rect",{x:5,y:5,width:542,height:414,rx:15,fill:"#3f2b1d"},svg);
@@ -820,7 +826,7 @@ function drawBoard(svg,pos,opt={}){
     el("rect",{x:x-3,y:TOP-3,width:w+6,height:BOT-TOP+6,rx:5,fill:"#20150d",stroke:INK,"stroke-width":"1.5"},svg);
     el("rect",{x,y:TOP,width:w,height:BOT-TOP,rx:3,fill:"#173a2e"},svg);
   });
-  for(let n=1;n<=24;n++){const x=px(n),t=isTop(n),a=n%2===1; // culorile alternează pe tot traseul 1–24
+  for(let n=1;n<=24;n++){const x=px(n),t=isTop(n),a=(n%2===1)!==FLIP; // culorile alternează pe tot traseul 1–24
     const y0=t?TOP:BOT,y1=t?TOP+PH:BOT-PH,l=x-PW/2+1.5,r=x+PW/2-1.5;
     el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#cfc09b":"#6e2a2b"},svg);
     el("polygon",{points:`${x},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#ad9a72":"#52201f"},svg);
@@ -858,11 +864,11 @@ function drawBoard(svg,pos,opt={}){
 
   // tava pentru piesele scoase (dreapta): sus adversarul, jos tu
   const TX=518,TW=28;
-  [[TOP,"opp",pos.oOff||0],[BOT-PH,"you",pos.pOff||0]].forEach(([ty,who,cnt])=>{
+  [[FLIP?BOT-PH:TOP,"opp",pos.oOff||0],[FLIP?TOP:BOT-PH,"you",pos.pOff||0]].forEach(([ty,who,cnt])=>{
     el("rect",{x:TX,y:ty,width:TW,height:PH,rx:6,fill:"#0d0805"},svg);
     el("rect",{x:TX+.5,y:ty+.5,width:TW-1,height:PH-1,rx:5.5,fill:"none",stroke:"#000","stroke-opacity":".6"},svg);
     el("rect",{x:TX,y:ty,width:TW,height:5,rx:3,fill:"#000","fill-opacity":".35"},svg);
-    const top=who==="opp",step=9.6,gy=top?ty+4:ty+PH-4-8.4;
+    const top=ty===TOP,step=9.6,gy=top?ty+4:ty+PH-4-8.4;
     for(let k=0;k<cnt;k++){const y=top?gy+k*step:gy-k*step,tp=el("g",{class:"tp","data-w":who},svg);
       el("rect",{x:TX+2.5,y:y+1.5,width:TW-5,height:8.4,rx:3,fill:"#000","fill-opacity":".45"},tp);
       el("rect",{x:TX+2.5,y,width:TW-5,height:8.4,rx:3,fill:CK[ckWho(svg,who)].face,stroke:INK,"stroke-width":".9"},tp);
@@ -872,9 +878,9 @@ function drawBoard(svg,pos,opt={}){
   });
   if(opt.zoneTray)el("rect",{x:TX-3,y:TOP-3,width:TW+6,height:BOT-TOP+6,rx:9,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
   const bx=X0+HALF+BARW/2;
-  for(let k=0;k<pos.oBar;k++)checker(svg,id,bx,TOP+54+k*30,"opp",13,{"data-n":"bar","data-w":"opp"});
-  for(let k=0;k<pos.pBar;k++)checker(svg,id,bx,BOT-54-k*30,"you",13,{"data-n":"bar","data-w":"you"});
-  if(pos.pBar&&(opt.hintFrom||[]).includes(25))el("circle",{class:"hintring",cx:bx,cy:BOT-54-(pos.pBar-1)*30,r:17,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
+  for(let k=0;k<pos.oBar;k++)checker(svg,id,bx,fy(TOP+54+k*30),"opp",13,{"data-n":"bar","data-w":"opp"});
+  for(let k=0;k<pos.pBar;k++)checker(svg,id,bx,fy(BOT-54-k*30),"you",13,{"data-n":"bar","data-w":"you"});
+  if(pos.pBar&&(opt.hintFrom||[]).includes(25))el("circle",{class:"hintring",cx:bx,cy:fy(BOT-54-(pos.pBar-1)*30),r:17,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
 }
 
 /* ================= ZARURI ================= */
@@ -1057,7 +1063,7 @@ document.addEventListener("toggle",e=>{if(e.target.tagName==="DETAILS")SFX.open(
 /* ================= SISTEMUL DE MUTARE (comun pentru joc și quiz) =================
    S: starea (pos, seqs, max, steps, turnStart, sel, drag, anim, last). Regulile vin din ENG.plays. */
 function svgPt(svg,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
-function pointAt(x,y){let half,i;if(x>=X0&&x<X0+HALF){half=0;i=Math.floor((x-X0)/PW);}else if(x>=X0+HALF+BARW&&x<X0+HALF*2+BARW){half=1;i=Math.floor((x-X0-HALF-BARW)/PW);}else return null;const idx=half*6+i;return y<(TOP+BOT)/2?13+idx:12-idx;}
+function pointAt(x,y){let half,i;if(x>=X0&&x<X0+HALF){half=0;i=Math.floor((x-X0)/PW);}else if(x>=X0+HALF+BARW&&x<X0+HALF*2+BARW){half=1;i=Math.floor((x-X0-HALF-BARW)/PW);}else return null;const idx=half*6+i;return fy(y)<(TOP+BOT)/2?13+idx:12-idx;}
 function pointAtFull(x,y){if(x>=X0+HALF&&x<X0+HALF+BARW)return 25;if(x>=518-4)return 0;return pointAt(x,y);}
 function makeMover(cfg){
   const S=cfg.S;const svg=()=>document.getElementById(cfg.svg);const wrap=document.getElementById(cfg.wrap);
@@ -1295,17 +1301,17 @@ function applyMove(q,[w,f,t]){const r=clone(q);
   return r;}
 const TRAYX=532;
 function coordFrom(q,w,f){const bx=X0+HALF+BARW/2;
-  if(w==="y")return f===25?{x:bx,y:BOT-54-(q.pBar-1)*30}:slot(f,q.p[f]-1,q.p[f]);
-  return f===0?{x:bx,y:TOP+54+(q.oBar-1)*30}:slot(f,q.o[f]-1,q.o[f]);}
+  if(w==="y")return f===25?{x:bx,y:fy(BOT-54-(q.pBar-1)*30)}:slot(f,q.p[f]-1,q.p[f]);
+  return f===0?{x:bx,y:fy(TOP+54+(q.oBar-1)*30)}:slot(f,q.o[f]-1,q.o[f]);}
 function coordTo(base,w,t){
-  if(w==="y"){if(t===0)return{x:TRAYX,y:BOT-8-base.pOff*9.6};const hit=base.o[t]===1;return hit?slot(t,0,1):slot(t,base.p[t],base.p[t]+1);}
-  if(t===25)return{x:TRAYX,y:TOP+8+base.oOff*9.6};const hit=base.p[t]===1;return hit?slot(t,0,1):slot(t,base.o[t],base.o[t]+1);}
+  if(w==="y"){if(t===0)return{x:TRAYX,y:fy(BOT-8-base.pOff*9.6)};const hit=base.o[t]===1;return hit?slot(t,0,1):slot(t,base.p[t],base.p[t]+1);}
+  if(t===25)return{x:TRAYX,y:fy(TOP+8+base.oOff*9.6)};const hit=base.p[t]===1;return hit?slot(t,0,1):slot(t,base.o[t],base.o[t]+1);}
 function tween(g,a,b,dur,arc,cb,tok,svg){const t0=performance.now();
   const st=now=>{if(svg._tok!==tok)return;const k=Math.min(1,(now-t0)/dur),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
     g.setAttribute("transform",`translate(${a.x+(b.x-a.x)*e},${a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*arc})`);if(k<1)requestAnimationFrame(st);else cb();};
   requestAnimationFrame(st);}
 function animateMoves(svg,pos,moves,opt,done){
-  const tok=(svg._tok||0)+1;svg._tok=tok;
+  setFlip(svg);const tok=(svg._tok||0)+1;svg._tok=tok;
   const finalPos=moves.reduce(applyMove,pos);
   const who=w=>w==="y"?"you":"opp";
   const fin=()=>{drawBoard(svg,finalPos,land!=null?Object.assign({},opt,{land:[land]}):opt);done&&done(finalPos);};
@@ -1328,7 +1334,7 @@ function animateMoves(svg,pos,moves,opt,done){
       if(hit){const tmp=clone(nx);if(w==="y")tmp.oBar--;else tmp.pBar--;
         drawBoard(svg,tmp,Object.assign({},opt,{land:[t]}));
         const vg=checker(svg,svg.id,0,0,w==="y"?"opp":"you",R);const bx=X0+HALF+BARW/2;
-        const vb=w==="y"?{x:bx,y:TOP+54+(nx.oBar-1)*30}:{x:bx,y:BOT-54-(nx.pBar-1)*30};
+        const vb=w==="y"?{x:bx,y:fy(TOP+54+(nx.oBar-1)*30)}:{x:bx,y:fy(BOT-54-(nx.pBar-1)*30)};
         const flash=el("text",{x:b.x,y:b.y-26,"text-anchor":"middle","font-family":"Playfair Display, serif","font-style":"italic","font-size":"18",fill:"#efe7d4",stroke:"#3a0d10","stroke-width":"3","paint-order":"stroke"},svg);flash.textContent="Lovit";
         tween(vg,slot(t,0,1),vb,280,50,()=>{cur=nx;setTimeout(next,90);},tok,svg);}
       else{cur=nx;if(t<1||t>24){setTimeout(next,70);return;}
@@ -1827,7 +1833,9 @@ function classify(loss,nOpts){if(nOpts<=1)return FORCED;return CLS.find(c=>loss<
 // iar pe tura lui Abanos tabla își schimbă culorile, ca fiecare să-și vadă piesele lui
 const PN={1:"Fildeș",2:"Abanos"};
 function mirrorPos(q){const p=Array(25).fill(0),o=Array(25).fill(0);for(let i=1;i<=24;i++){p[i]=q.o[25-i];o[i]=q.p[25-i];}return{p,o,pBar:q.oBar,oBar:q.pBar,pOff:q.oOff,oOff:q.pOff};}
-function setView(){const b=jEl("jBoard");if(G.two&&G.cur===2)b.dataset.swap="1";else delete b.dataset.swap;}
+// tabla fixă: Abanos o vede din partea lui de masă, adică cu sus și jos inversate față de Fildeș
+function setView(){const b=jEl("jBoard"),p2=G.two&&G.cur===2;if(p2)b.dataset.swap="1";else delete b.dataset.swap;
+  if(p2&&S.fixedBoard===true)b.dataset.flip="1";else delete b.dataset.flip;}
 const G={pos:null,turn:null,phase:"idle",dice:null,seqs:[],max:0,steps:[],turnStart:null,sel:null,hist:[],level:"mediu",pYou:.5,over:null,drag:null,anim:false,lastMv:null};
 function fromCanon(x,side){const p=Array(25).fill(0),o=Array(25).fill(0);
   if(side==="you"){for(let i=1;i<=24;i++){p[i]=x.a[i];o[i]=x.b[25-i];}return{p,o,pBar:x.a[25],pOff:x.a[0],oBar:x.b[25],oOff:x.b[0]};}
@@ -1887,7 +1895,7 @@ async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").
   const two=G.two,LA=two?PN[1]:"Tu",LB=two?PN[2]:"Bot";
   if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:[LA],text:S.autoRoll===true?"":two?`Aruncă, ${PN[1]}`:"Aruncă zarul tău"});if(tok!==G.gameTok)return;
     setStatus(two?`${PN[1]} a dat <b>${a}</b>. Acum aruncă ${PN[2]}.`:`Ai dat <b>${a}</b>. Acum aruncă botul…`);
-    [b]=await DICE3D.throwDice(two?{keep:true,side:"you",auto:S.autoRoll===true,slots:[1],tints:["bot"],keepOthers:true,labels:[LB],text:S.autoRoll===true?"":`Aruncă, ${PN[2]}`}:{keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
+    [b]=await DICE3D.throwDice(two?{keep:true,side:S.fixedBoard===true?"bot":"you",auto:S.autoRoll===true,slots:[1],tints:["bot"],keepOthers:true,labels:[LB],text:S.autoRoll===true?"":`Aruncă, ${PN[2]}`}:{keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
     setTimeout(()=>DICE3D.clear(),a===b?700:1100);}
   else{SFX.roll();a=rollDie();await new Promise(r=>setTimeout(r,250));b=rollDie();if(tok!==G.gameTok)return;}
   G.busy=false;renderJ();
@@ -1898,7 +1906,7 @@ async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").
     if(two){const w=a>b?1:2;if(w===2){G.cur=2;G.pos=mirrorPos(G.pos);setView();}setStatus(`<b>Începe ${PN[w]}</b> cu ${Math.max(a,b)}-${Math.min(a,b)}.`);startYourTurn(w===1?[a,b]:[b,a]);return;}
     if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
     else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},450);}
-async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const tok=G.gameTok;const d=await rollPair({side:"you",auto:S.autoRoll===true,tints:G.two&&G.cur===2?["bot","bot"]:undefined});if(tok!==G.gameTok)return;G.busy=false;startYourTurn(d);}
+async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const tok=G.gameTok;const d=await rollPair({side:jEl("jBoard").dataset.flip?"bot":"you",auto:S.autoRoll===true,tints:G.two&&G.cur===2?["bot","bot"]:undefined});if(tok!==G.gameTok)return;G.busy=false;startYourTurn(d);}
 function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;G.turnHinted=false;G.hint=null;
   const max=JM.begin(G.pos,d[0],d[1]);
   if(max===0){G.phase="wait";renderJ();setStatus(G.two?`${PN[G.cur]} are ${d[0]}-${d[1]} și <b>nu poate muta</b>.`:`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
@@ -1910,7 +1918,7 @@ function nextPlayer(){const tok=G.gameTok;if(G.phase==="over")return;
   const last=(G.steps||[]).map(m=>m[1]).filter(t=>t>=1&&t<=24).map(t=>25-t);
   G.hintsP[G.cur]=G.hints;G.cur=3-G.cur;G.hints=G.hintsP[G.cur];G.pos=mirrorPos(G.pos);G.steps=[];G.sel=null;G.hint=null;G.lastMv=[...new Set(last)];
   setView();G.phase="roll";G.dice=null;DICE3D.clear();renderJ();jBoardDraw();
-  if(!reduce)jEl("jBoard").animate([{opacity:.35},{opacity:1}],{duration:260,easing:"ease-out"});
+  if(!reduce&&S.fixedBoard!==true)jEl("jBoard").animate([{opacity:.35},{opacity:1}],{duration:260,easing:"ease-out"});
   setStatus(`Rândul lui <b>${PN[G.cur]}</b>.`);if(tok===G.gameTok)offerRoll(250);}
 const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,extra:hintOpt,
   onComplete:()=>{if(S.autoOk!==false)setTimeout(()=>{if(G.phase==="move"&&G.steps.length===G.max&&!G.anim)confirmMove();},280);}});
@@ -2018,7 +2026,7 @@ const END=(()=>{
     await tween(win?620:900,k=>shine.setAttribute("transform",`translate(${(w+140)*ease(k)},0)`));
     if(win)for(let n=2;n<=pts;n++){await wait(220);if(!live(t0))return;s.textContent=word(n);SFX.place();squash(s,200,2);sparks(L,cx,y+h-26,10,.8,g);}
     if(reduce)s.textContent=win?word(pts):sub;}
-  function trayTop(who,cnt){return who==="you"?BOT-8-cnt*9.6:TOP+8+cnt*9.6;}
+  function trayTop(who,cnt){return fy(who==="you"?BOT-8-cnt*9.6:TOP+8+cnt*9.6);}
   async function myFinish(L){const trays=[...L.root.querySelectorAll('.tp[data-w="you"]')];
     sparks(L,TX+TW/2,trayTop("you",trays.length),18);shake(L,3,220);glow(L,.24);
     for(const t of trays.reverse()){squash(t,170,1.6);await wait(32);}}
@@ -2026,7 +2034,7 @@ const END=(()=>{
     async win(L){await myFinish(L);await wait(150);},
     async mart(L){await myFinish(L);const opp=L.pieces("opp");
       opp.forEach((c,i)=>{ring(L,c.x,c.y,BR,650,i*30);setTimeout(()=>jitter(c,380,2),reduce?0:i*30);});await wait(800);
-      const zx=TX+TW/2,zy=TOP+PH/2,z=el("text",{x:zx,y:zy+8,"text-anchor":"middle","font-family":"Hanken Grotesk, sans-serif","font-weight":800,"font-size":24,fill:BR,opacity:0},L.top);z.textContent="0";
+      const zx=TX+TW/2,zy=fy(TOP+PH/2),z=el("text",{x:zx,y:zy+8,"text-anchor":"middle","font-family":"Hanken Grotesk, sans-serif","font-weight":800,"font-size":24,fill:BR,opacity:0},L.top);z.textContent="0";
       await tween(220,k=>{z.setAttribute("opacity",Math.min(1,k*3));z.setAttribute("transform",`translate(${zx},${zy}) scale(${2.6-1.6*k*k}) translate(${-zx},${-zy})`);});
       SFX.place();shake(L,4,240);ring(L,zx,zy,BR,500,0,10,30);await wait(400);},
     async bg(L){await myFinish(L);const opp=L.pieces("opp"),stuck=opp.filter(c=>c.n==="bar"||+c.n<=6);
@@ -2035,11 +2043,11 @@ const END=(()=>{
       for(let r=0;r<3;r++){stuck.forEach(c=>{ring(L,c.x,c.y,"#d2453b",460,0,c.rx+1,c.rx+14);jitter(c,300,3);});
         await tween(300,k=>fl.forEach(f=>{const v=Math.sin(Math.PI*k);f.setAttribute("fill-opacity",.75*v);f.setAttribute("stroke-opacity",v);}));}
       fl.forEach(f=>f.remove());shake(L,4,220);await wait(150);},
-    async mt(L){const all=L.pieces("you"),t0=tok;shadowsDown(L,all);const H=c=>18+(c.y<BOT-R-10?4:0);
+    async mt(L){const all=L.pieces("you"),t0=tok;shadowsDown(L,all);const H=c=>18+(Math.abs(c.y-fy(BOT-R-1))>10?4:0);
       for(let n=6;n>=1;n--){all.filter(c=>+c.n===n).forEach(c=>tween(280,k=>lift(c,H(c)*ease(k))));await wait(120);}
       await wait(180);await tween(500,k=>all.forEach((c,i)=>lift(c,H(c)+2.5*Math.sin(k*Math.PI*2+i*.5)*Math.sin(Math.PI*k))));
       await Promise.all(all.map(c=>tween(130,k=>lift(c,H(c)*(1-k*k)))));if(!live(t0))return;SFX.hit();all.forEach(c=>squash(c.g,180,1.4));
-      shake(L,8,360);glow(L,.3);for(let n=1;n<=6;n++){ring(L,px(n),BOT-R-18,BR,700,n*40,26,50);sparks(L,px(n),BOT-60,5,.7);}
+      shake(L,8,360);glow(L,.3);for(let n=1;n<=6;n++){ring(L,px(n),fy(BOT-R-18),BR,700,n*40,26,50);sparks(L,px(n),fy(BOT-60),5,.7);}
       await wait(650);},
     async lt(L){const t0=tok,cs=L.pieces("you").sort((a,b)=>b.x-a.x);shadowsDown(L,cs);
       for(const c of cs){ring(L,c.x,c.y,BR,600);sparks(L,c.x,c.y-R,4,.5);tween(220,k=>lift(c,8*Math.sin(Math.PI*k)));if(live(t0))SFX.place();await wait(130);}
@@ -2055,7 +2063,7 @@ const END=(()=>{
   // kind: win | mart | bg | mt | lt | lose
   async function play(kind,title,sub,pts,win){clear();const t0=tok,wrap=jEl("jWrap");
     svgEnd=el("svg",{id:"jEnd",class:"board endfx",viewBox:"0 0 552 424","aria-hidden":"true"});wrap.insertBefore(svgEnd,jEl("jTap"));
-    if(jEl("jBoard").dataset.swap)svgEnd.dataset.swap="1";drawBoard(svgEnd,G.pos,{});const root=el("g",{},svgEnd);[...svgEnd.children].forEach(ch=>{if(ch!==root&&ch.tagName!=="defs")root.appendChild(ch);});
+    if(jEl("jBoard").dataset.swap)svgEnd.dataset.swap="1";if(jEl("jBoard").dataset.flip)svgEnd.dataset.flip="1";drawBoard(svgEnd,G.pos,{});const root=el("g",{},svgEnd);[...svgEnd.children].forEach(ch=>{if(ch!==root&&ch.tagName!=="defs")root.appendChild(ch);});
     const L={root,fx:el("g",{},root),dim:el("rect",{x:0,y:0,width:552,height:424,rx:18,fill:"#000","fill-opacity":0},root),top:el("g",{},root),plaque:el("g",{},root),
       pieces:who=>[...root.querySelectorAll(`.ck[data-w="${who}"]`)].map(piece)};
     try{await RUN[kind](L);if(live(t0))await plaque(L,title,sub,pts,win);}catch(e){console.error(e);}}
@@ -2090,8 +2098,8 @@ function logRender(){jEl("jLogBox").hidden=!G.hist.length;jEl("jLog").innerHTML=
 const LVINFO={incepator:"Mută la întâmplare.",usor:"Greșește des.",mediu:"Joacă bine, cu mici greșeli.",greu:"Motorul GNU, cu mici variații.",expert:"Motorul GNU la putere maximă."};
 const LVNAME={incepator:"Începător",usor:"Ușor",mediu:"Mediu",greu:"Greu",expert:"Expert"};
 function renderLevel(){G.level=S.botLevel||G.level;document.querySelectorAll("#jLevel .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.l===G.level));jEl("jLevelInfo").textContent=LVINFO[G.level];jEl("jSetSum").textContent=S.mode==="doi"?"Doi jucători":`Bot ${LVNAME[G.level].toLowerCase()}`;
-  document.querySelectorAll("#jMode .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===(S.mode==="doi"?"doi":"bot")));jEl("jLevelF").hidden=S.mode==="doi";
-  jEl("jModeInfo").textContent=S.mode==="doi"?`${PN[1]} (piesele albe) și ${PN[2]} (piesele negre) mută pe rând. Tabla se întoarce spre cel la mutare.`:"Joci contra botului, cu notă pentru fiecare mutare.";
+  document.querySelectorAll("#jMode .pill").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===(S.mode==="doi"?"doi":"bot")));jEl("jLevelF").hidden=S.mode==="doi";jEl("jFixedL").hidden=S.mode!=="doi";
+  jEl("jModeInfo").textContent=S.mode==="doi"?`${PN[1]} (piesele albe) și ${PN[2]} (piesele negre) mută pe rând.${S.fixedBoard===true?"":" Tabla se întoarce spre cel la mutare."}`:"Joci contra botului, cu notă pentru fiecare mutare.";
   const c=jEl("jDice3d");c.checked=S.dice3d!==false&&DICE3D.available();c.disabled=!DICE3D.available();}
 document.querySelectorAll("#jLevel .pill").forEach(b=>b.addEventListener("click",()=>{S.botLevel=b.dataset.l;save();renderLevel();}));
 document.querySelectorAll("#jMode .pill").forEach(b=>b.addEventListener("click",()=>{const m=b.dataset.m==="doi"?"doi":"bot";if((S.mode==="doi"?"doi":"bot")===m)return;S.mode=m;save();newGame();}));
@@ -2100,6 +2108,7 @@ function renderMode(){jEl("jTitle").textContent=G.two?"Doi jucători":"Contra bo
 jEl("jDice3d").addEventListener("change",e=>{S.dice3d=e.target.checked;save();renderJ();if(!jEl("jTap").hidden||!G.busy){hideTap();offerRoll(100);}});
 jEl("jMartT").checked=S.martTehnic===true;jEl("jMartT").addEventListener("change",e=>{S.martTehnic=e.target.checked;save();});
 jEl("jLinieT").checked=S.linieTehnica===true;jEl("jLinieT").addEventListener("change",e=>{S.linieTehnica=e.target.checked;save();});
+jEl("jFixed").checked=S.fixedBoard===true;jEl("jFixed").addEventListener("change",e=>{S.fixedBoard=e.target.checked;save();renderLevel();if(G.two){setView();if(!G.anim)jBoardDraw();}});
 jEl("jSound").checked=S.sound!==false;jEl("jSound").addEventListener("change",e=>{S.sound=e.target.checked;save();});
 jEl("jAutoRoll").checked=S.autoRoll===true;jEl("jAutoRoll").addEventListener("change",e=>{S.autoRoll=e.target.checked;save();if(S.autoRoll)offerRoll();});
 // rândul tău: zarurile apar direct pe tablă. Le atingi (2D) sau le arunci cu mâna (3D); pe automat se aruncă singure.
@@ -2196,12 +2205,14 @@ function fsFit(){const {view,bw}=FSV;if(!view)return;const card=bw.closest(".car
   // ecran lat (laptop, telefon pe orizontală): tabla în stânga pe toată înălțimea, comenzile în dreapta
   const side=window.innerWidth>window.innerHeight*1.25;card.classList.toggle("fsside",side);bw.style.maxWidth="none";
   if(side){const cs=getComputedStyle(view),vs=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
-    const col=Math.min(260,Math.max(190,window.innerWidth*.22));card.style.setProperty("--fscol",col+"px");
-    bw.style.width=Math.max(220,Math.min(card.clientWidth-32-col-16,(window.innerHeight-vs-34)*552/424))+"px";
+    const col=Math.min(240,Math.max(170,window.innerWidth*.2));card.style.setProperty("--fscol",col+"px");
+    const cp=getComputedStyle(card),pad=parseFloat(cp.paddingTop)+parseFloat(cp.paddingBottom),padX=parseFloat(cp.paddingLeft)+parseFloat(cp.paddingRight);
+    bw.style.width=Math.max(220,Math.min(card.clientWidth-padX-col-10,(window.innerHeight-vs-pad)*552/424))+"px";
     FSV.busy=true;window.dispatchEvent(new Event("resize"));FSV.busy=false;return;}
   let other=0,n=0;[...card.children].forEach(c=>{if(c===bw||!c.offsetHeight||getComputedStyle(c).position==="absolute")return;other+=c.offsetHeight;n++;});
   const cs=getComputedStyle(view),vs=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
-  const availH=window.innerHeight-vs-other-n*12-32-2,availW=card.clientWidth-32;
+  const cp=getComputedStyle(card),pad=parseFloat(cp.paddingTop)+parseFloat(cp.paddingBottom),padX=parseFloat(cp.paddingLeft)+parseFloat(cp.paddingRight);
+  const availH=window.innerHeight-vs-other-n*6-pad-2,availW=card.clientWidth-padX;
   bw.style.width=Math.max(240,Math.min(availW,availH*552/424))+"px";
   FSV.busy=true;window.dispatchEvent(new Event("resize"));FSV.busy=false;}
 function fsEnter(bw){FSV.view=bw.closest(".view");FSV.bw=bw;if(window.ResizeObserver){FSV.ro=new ResizeObserver(()=>fsFit());[...bw.closest(".card").children].forEach(c=>{if(c!==bw)FSV.ro.observe(c);});}FSV.view.classList.add("fs");document.body.classList.add("fsOn");
