@@ -94,6 +94,7 @@ aside.side{display:none}
 .phead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:4px}
 .phead.col{flex-direction:column;align-items:stretch;margin-bottom:16px}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:48px}
+.toolbar>.row:only-child{margin-left:auto}
 .toolbar.sm{min-height:0}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .row.sm{gap:6px}
@@ -171,7 +172,6 @@ svg.endfx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .dice{display:inline-flex;gap:8px;vertical-align:middle}
 .die{width:28px;height:28px;display:block;filter:drop-shadow(0 2px 0 #9c8f73) drop-shadow(0 6px 8px rgba(0,0,0,.45))}
 .dice.big .die{width:44px;height:44px}
-.dice.mini{gap:4px}.dice.mini .die{width:22px;height:22px}
 .die.used{opacity:.25;filter:none}
 .die.roll{animation:roll .5s cubic-bezier(.3,1.4,.5,1)}
 .die.roll:nth-child(2){animation-delay:.06s}
@@ -433,7 +433,6 @@ body.fsOn .fsbtn .ex{display:block}
 .evtrack i{display:block;height:100%;background:linear-gradient(90deg,#cfc2a4,#f4ecda);transition:width .7s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 10px rgba(239,231,212,.45)}
 .jstatus{font-size:15px;color:var(--fg);min-height:24px}
 .jstatus b{color:var(--brass-hi)}
-.oroll{display:inline-flex;align-items:center;gap:6px;margin-right:10px}.oroll small{font-weight:600;font-size:13px;color:var(--muted)}
 .mvbadge{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px;
   box-shadow:inset 0 1px 0 rgba(255,236,205,.07),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent),0 22px 44px -28px #000}
 .mvsym{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#14100b;font-weight:800;font-size:16px;box-shadow:0 0 18px color-mix(in srgb,var(--c) 55%,transparent)}
@@ -557,6 +556,7 @@ body.fsOn .fsbtn .ex{display:block}
         <label class="toggle"><input type="checkbox" id="jDice3d"> Zaruri 3D, aruncate cu mâna</label>
         <label class="toggle"><input type="checkbox" id="jAutoRoll"> Aruncă zarurile automat</label>
         <label class="toggle"><input type="checkbox" id="jAuto"> Confirmă mutarea automat</label>
+        <label class="toggle"><input type="checkbox" id="jPipB"> Pip count pe tablă</label>
         <label class="toggle"><input type="checkbox" id="jSound"> Sunete</label></div>
       <div class="field"><span class="flabel">Reguli</span>
         <label class="toggle"><input type="checkbox" id="jMartT"> Marț tehnic: câte 2 piese pe fiecare punct din casă, 3 puncte</label>
@@ -565,7 +565,7 @@ body.fsOn .fsbtn .ex{display:block}
     </div>
   </details>
   <div class="card stack">
-    <div class="toolbar"><span class="dice big" id="jDice"></span><div class="row"><div class="row" id="jCtl"></div><div class="row"><button class="btn ghost small eyebtn" id="jEye" type="button" aria-label="Ascunde analiza" title="Ascunde analiza" aria-pressed="false"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1Q11.3 5 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 4"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.9 0 3.6-.6 5-1.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div></div>
+    <div class="toolbar"><div class="row"><div class="row" id="jCtl"></div><div class="row"><button class="btn ghost small eyebtn" id="jEye" type="button" aria-label="Ascunde analiza" title="Ascunde analiza" aria-pressed="false"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1Q11.3 5 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 4"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.9 0 3.6-.6 5-1.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button><button class="btn ghost small fsbtn" type="button" aria-label="Ecran complet" title="Ecran complet"><svg class="en" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg><svg class="ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></button></div></div></div>
     <div class="evalbar xtra" aria-label="Șanse de câștig"><span class="evl"><i class="dot you"></i><span id="evLY">Tu</span> <b id="evYou">50%</b></span><div class="evtrack"><i id="evFill" style="width:50%"></i></div><span class="evl"><b id="evBot">50%</b> <span id="evLB">Bot</span><i class="dot opp"></i></span></div>
     <div class="boardwrap" id="jWrap"><svg class="board" id="jBoard" viewBox="0 0 552 424" role="img" aria-label="Tabla de joc"></svg><button class="tapdice" id="jTap" type="button" hidden aria-label="Aruncă zarurile"><span class="dice" id="jTapDice"></span><span class="taphint">Atinge zarurile</span></button></div>
     <p class="jstatus" id="jStatus"></p>
@@ -791,7 +791,9 @@ function touchDay(){
 
 /* ================= TABLA ================= */
 const NS="http://www.w3.org/2000/svg";
-const PW=38,X0=14,HALF=228,BARW=28,TOP=22,BOT=402,PH=162,R=17;
+// ramă de 18 peste tot: ramă | câmp | bară | câmp | ramă | tavă (40) | ramă; colțul exterior e concentric cu adânciturile
+const X0=18,BARW=18,TW=40,PW=(552-3*X0-BARW-TW)/12,HALF=6*PW,TOP=18,BOT=406,PH=162,R=17,RX=12,RXO=30;
+const FR=X0+2*HALF+BARW,TX=FR+X0,MID=(TOP+BOT)/2,BARX=X0+HALF+BARW/2,BS=.8,GAP=2*R+3.5;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function px(n){const idx=n>=13?n-13:12-n;const half=idx<6?0:1;return X0+half*(HALF+BARW)+(idx%6)*PW+PW/2;}
 // FLIP: tabla văzută din partea cealaltă a mesei (doi jucători, tabla fixă): aceleași coloane, sus și jos inversate
@@ -799,58 +801,76 @@ let FLIP=false;function setFlip(svg){FLIP=!!(svg&&svg.dataset&&svg.dataset.flip)
 function fy(y){return FLIP?TOP+BOT-y:y;}
 function isTop(n){return (n>=13)!==FLIP;}
 function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
-function spacing(c){return c<=5?R*2:Math.min(R*2,(PH-R*2)/(c-1));}
-function slot(n,k,count){const sp=spacing(count);return{x:px(n),y:isTop(n)?TOP+R+1+k*sp:BOT-R-1-k*sp};}
+function spacing(c){return c<=5?GAP:4*GAP/(c-1);}
+function slot(n,k,count){const sp=spacing(count);return{x:px(n),y:isTop(n)?TOP+R+2+k*sp:BOT-R-4-k*sp};}
+// piesele lovite stau pe mijlocul barei, la scara BS; ale adversarului urcă, ale tale coboară
+function barPos(who,k){const d=R*BS+2+k*(2*R*BS+3);return{x:BARX,y:fy(who==="opp"?MID-d:MID+d)};}
+// centrul plăcuței k din tavă
+function trayPos(who,k){return{x:TX+TW/2,y:fy(who==="you"?BOT-10-k*9:TOP+10+k*9)};}
 function toPos(s){const p=Array(25).fill(0),o=Array(25).fill(0);for(const k in s.p)p[k]=s.p[k];for(const k in s.o)o[k]=s.o[k];const pBar=s.pBar||0,oBar=s.oBar||0;
   return{p,o,pBar,oBar,pOff:15-p.reduce((a,b)=>a+b,0)-pBar,oOff:15-o.reduce((a,b)=>a+b,0)-oBar};}
 function clone(q){return{p:q.p.slice(),o:q.o.slice(),pBar:q.pBar,oBar:q.oBar,pOff:q.pOff,oOff:q.oOff};}
 
 const INK="#140d08";
-const CK={you:{face:"#e4d9c1",side:"#b3a383",band:"#d3c6aa",ring:"#a8987a"},opp:{face:"#3a302a",side:"#120d0a",band:"#2a221d",ring:"#5a4c42"}};
+const CK={you:{side:"#b0a385",ring:"#a39370",hi:"#e6dcc6"},opp:{side:"#100c0a",ring:"#000",hi:"#43372f"}};
+// se creează o singură dată pe fiecare tablă, ca texturile să nu se reîncarce la redesenare
 function defs(svg){
   const id=svg.id,d=el("defs",{},svg);
   const gf=el("filter",{id:id+"glow",x:"-50%",y:"-50%",width:"200%",height:"200%"},d);
   el("feGaussianBlur",{stdDeviation:"3",result:"b"},gf);const m=el("feMerge",{},gf);el("feMergeNode",{in:"b"},m);el("feMergeNode",{in:"SourceGraphic"},m);
   const mk=el("marker",{id:id+"ah",viewBox:"0 0 10 10",refX:"6",refY:"5",markerWidth:"4.2",markerHeight:"4.2",orient:"auto-start-reverse"},d);
   el("path",{d:"M0,0 L10,5 L0,10 z",fill:"#ead08f"},mk);
+  // culoarea de sub textură se vede până se încarcă imaginea
+  [["rail","#3a2a20"],["cream","#bdb093"],["red","#5c2c2a"],["felt","#21423a"],["tray","#17100b"]].forEach(([k,c])=>{const t=el("pattern",{id:id+k,patternUnits:"userSpaceOnUse",width:200,height:200},d);
+    el("rect",{width:200,height:200,fill:c},t);el("image",{href:`tex/${k}.jpg`,width:200,height:200},t);});
+  [["grain-you","grain"],["grain-opp","grain-w"]].forEach(([k,f])=>{const t=el("pattern",{id:id+k,patternUnits:"userSpaceOnUse",width:96,height:96,patternTransform:"rotate(8)"},d);el("image",{href:`tex/${f}.png`,width:96,height:96},t);});
+  [["you","#ded5c0","#c9bda1"],["opp","#352b25","#1d1612"]].forEach(([k,a,b])=>{const t=el("radialGradient",{id:id+"face-"+k,cx:"45%",cy:"40%",r:"70%"},d);el("stop",{offset:0,"stop-color":a},t);el("stop",{offset:1,"stop-color":b},t);});
+  [["you","#ded5c0","#5f553f"],["opp","#3a302a","#0c0907"]].forEach(([k,lt,dk])=>{const t=el("linearGradient",{id:id+"slab-"+k},d);[[0,dk],[.18,lt],[.82,lt],[1,dk]].forEach(([o,c])=>el("stop",{offset:o,"stop-color":c},t));});
+  wells().forEach((w,i)=>{const c=el("clipPath",{id:id+"well"+i},d);el("rect",{x:w.x,y:w.y,width:w.w,height:w.h,rx:RX},c);});
 }
-// piesă cel-shaded: umbră tare, grosime (margine), față plată cu semilună mai închisă; lift = cât e ridicată
+// adânciturile din piele: două câmpuri și două buzunare de tavă
+function wells(){const h=BOT-TOP,th=h/2-X0/2;return[{x:X0,y:TOP,w:HALF,h,fill:"felt"},{x:X0+HALF+BARW,y:TOP,w:HALF,h,fill:"felt"},{x:TX,y:TOP,w:TW,h:th,fill:"tray"},{x:TX,y:MID+X0/2,w:TW,h:th,fill:"tray"}];}
+// piesă: umbră, muchie, față plată cu fibră de lemn discretă și inel teșit; lift = cât e ridicată
 function ckWho(svg,who){return svg&&svg.dataset&&svg.dataset.swap?(who==="you"?"opp":"you"):who;}
-function checker(parent,svgId,x,y,who,r=R-.5,extra={},lift=0){
-  const c=CK[ckWho(parent.ownerSVGElement||parent,who)],g=el("g",Object.assign({class:"ck"},extra),parent),sw=r<15?1.1:1.4;
-  el("ellipse",{class:"ck-sh",cx:x+2+lift*.5,cy:y+3.5+lift*.9,rx:r+(lift?2:0),ry:r*.92+(lift?1.5:0),fill:"#000","fill-opacity":lift?".2":".3"},g);
+function checker(parent,svgId,x,y,who,r=R,extra={},lift=0){
+  const w=ckWho(parent.ownerSVGElement||parent,who),c=CK[w],g=el("g",Object.assign({class:"ck"},extra),parent);
+  el("ellipse",{class:"ck-sh",cx:x+1+lift*.5,cy:y+3.5+lift*.9,rx:r+.5+(lift?2:0),ry:r+(lift?1.5:0),fill:"#000","fill-opacity":lift?".2":".28"},g);
   y-=lift;
-  el("ellipse",{class:"ck-side",cx:x,cy:y+r*.2,rx:r,ry:r*.96,fill:c.side,stroke:INK,"stroke-width":sw},g);
-  el("circle",{class:"ck-face",cx:x,cy:y,r,fill:c.face,stroke:INK,"stroke-width":sw},g);
-  el("path",{class:"ck-band",d:`M${x+r*.94} ${y-r*.32}A${r} ${r} 0 0 1 ${x-r*.32} ${y+r*.94}A${r*1.16} ${r*1.16} 0 0 0 ${x+r*.94} ${y-r*.32}Z`,fill:c.band},g);
-  el("circle",{cx:x,cy:y,r:r*.66,fill:"none",stroke:c.ring,"stroke-width":sw*.8},g);
+  el("ellipse",{cx:x,cy:y+2.5,rx:r,ry:r,fill:c.side,stroke:INK,"stroke-width":1.2},g);
+  el("circle",{class:"ck-face",cx:x,cy:y,r,fill:`url(#${svgId}face-${w})`,stroke:INK,"stroke-width":1.2},g);
+  el("circle",{cx:x,cy:y,r:r-.6,fill:`url(#${svgId}grain-${w})`,"fill-opacity":".022"},g);
+  el("circle",{cx:x,cy:y,r:r*.8,fill:"none",stroke:c.ring,"stroke-width":1.3,"stroke-opacity":".75"},g);
+  el("circle",{cx:x,cy:y+.8,r:r*.8,fill:"none",stroke:c.hi,"stroke-width":.8,"stroke-opacity":".55"},g);
   return g;
 }
+// numere gravate în piele
+function engr(p,x,y,txt,o={}){const size=10*(o.scale||1);y+=size*.36;
+  const a={x,"text-anchor":"middle","font-size":size,"font-weight":500,"font-family":"Playfair Display, Georgia, serif","font-style":"italic",style:"font-variant-numeric:lining-nums tabular-nums"};
+  if(!o.fill)el("text",Object.assign({},a,{y:y+.6,fill:"#fff","fill-opacity":".06"}),p).textContent=txt;
+  el("text",Object.assign({},a,{y,fill:o.fill||"#1a110b","fill-opacity":o.fill?1:.85,class:o.cls||"num"}),p).textContent=txt;}
+const PIPS={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]};
+// zarurile de pe tablă: în dreapta ale tale, în stânga ale adversarului; opt.dice=[{v,used,side}]
+function boardDice(svg,dice){["you","opp"].forEach(side=>{const ds=dice.filter(d=>d.side===side),n=ds.length,k=n>2?.75:1,cx=side==="you"?X0+HALF+BARW+HALF/2:X0+HALF/2;
+  ds.forEach((d,i)=>{const g=el("g",{class:"bd-die","data-v":d.v,"data-used":d.used?1:0,opacity:d.used?.4:1,transform:`translate(${cx+(i-(n-1)/2)*40*k},${MID+(i%2?1:-1)}) rotate(${[-8,11,-5,7][i]})`},svg),z=30*k,
+      rc=(dx,dy,fill,o)=>el("rect",Object.assign({x:-z/2+dx,y:-z/2+dy,width:z,height:z,rx:7*k,fill},o),g);
+    rc(2,4,"#000",{"fill-opacity":".3"});rc(0,2.5,"#b0a385",{stroke:INK,"stroke-width":1.3});rc(0,0,"#ddd3bd",{stroke:INK,"stroke-width":1.3});
+    PIPS[d.v].forEach(([a,b])=>el("circle",{cx:a*8*k,cy:b*8*k,r:2.8*k,fill:"#2a1614"},g));});});}
 function drawBoard(svg,pos,opt={}){
-  setFlip(svg);svg.innerHTML="";defs(svg);const id=svg.id;
-  // rama de nuc: bandă luminată sus, umbrită jos
-  el("rect",{x:1,y:1,width:550,height:422,rx:18,fill:"#33231a",stroke:INK,"stroke-width":"2"},svg);
-  el("rect",{x:5,y:5,width:542,height:414,rx:15,fill:"#3f2b1d"},svg);
-  el("path",{d:"M5 212H547V404A15 15 0 0 1 532 419H20A15 15 0 0 1 5 404Z",fill:"#2c1e15"},svg);
-  const fields=[[X0,HALF],[X0+HALF+BARW,HALF]];
-  fields.forEach(([x,w])=>{
-    el("rect",{x:x-3,y:TOP-3,width:w+6,height:BOT-TOP+6,rx:5,fill:"#20150d",stroke:INK,"stroke-width":"1.5"},svg);
-    el("rect",{x,y:TOP,width:w,height:BOT-TOP,rx:3,fill:"#173a2e"},svg);
-  });
-  for(let n=1;n<=24;n++){const x=px(n),t=isTop(n),a=(n%2===1)!==FLIP; // culorile alternează pe tot traseul 1–24
-    const y0=t?TOP:BOT,y1=t?TOP+PH:BOT-PH,l=x-PW/2+1.5,r=x+PW/2-1.5;
-    el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#cfc09b":"#6e2a2b"},svg);
-    el("polygon",{points:`${x},${y0} ${r},${y0} ${x},${y1}`,fill:a?"#ad9a72":"#52201f"},svg);
-    el("polygon",{points:`${l},${y0} ${r},${y0} ${x},${y1}`,fill:"none",stroke:INK,"stroke-width":"1","stroke-opacity":".8","stroke-linejoin":"round"},svg);
-    const hl=(opt.dests||[]).includes(n);
-    const lab=el("text",{x,y:t?15:417,"text-anchor":"middle","font-size":"10.5","font-weight":"700","font-family":"Hanken Grotesk, sans-serif",fill:hl?"#ead08f":"#d9cba8","fill-opacity":hl?"1":".6"},svg);lab.textContent=n;
-  }
-  // umbra tare a ramei pe postav (lumina vine din stânga-sus)
-  fields.forEach(([x,w])=>el("path",{d:`M${x} ${TOP}H${x+w}V${TOP+8}H${x+8}V${BOT}H${x}Z`,fill:"#000","fill-opacity":".28","pointer-events":"none"},svg));
-  // bara
-  el("rect",{x:X0+HALF,y:TOP-6,width:BARW,height:BOT-TOP+12,fill:"#2c1e15",stroke:INK,"stroke-width":"1.5"},svg);
-  el("rect",{x:X0+HALF+1,y:TOP-5,width:BARW/2-1,height:BOT-TOP+10,fill:"#3f2b1d"},svg);
-  el("line",{x1:X0+HALF+BARW/2,x2:X0+HALF+BARW/2,y1:TOP,y2:BOT,stroke:INK,"stroke-opacity":".5"},svg);
+  setFlip(svg);const id=svg.id,df=svg.querySelector(":scope>defs");svg.replaceChildren(...(df?[df]:[]));if(!df)defs(svg);
+  // o singură suprafață de piele: rama, bara și marginea tăvii
+  el("rect",{x:0,y:0,width:552,height:424,rx:RXO,fill:INK},svg);
+  el("rect",{x:1.5,y:1.5,width:549,height:421,rx:RXO-1.5,fill:`url(#${id}rail)`},svg);
+  el("rect",{x:2,y:2,width:548,height:420,rx:RXO-2,fill:"none",stroke:"#fff","stroke-opacity":".05","stroke-width":1.5},svg);
+  wells().forEach((w,i)=>{const box={x:w.x,y:w.y,width:w.w,height:w.h},g=el("g",{"clip-path":`url(#${id}well${i})`},svg);
+    el("rect",Object.assign({fill:`url(#${id}${w.fill})`},box),g);
+    if(w.fill==="felt")for(let n=1;n<=24;n++){const x=px(n);if(x<w.x||x>w.x+w.w)continue;
+      const t=isTop(n),a=(n%2===1)!==FLIP,y0=t?TOP-4:BOT+4,y1=t?TOP+PH:BOT-PH,yb=y1+(t?-6:6); // culorile alternează pe tot traseul 1–24
+      el("path",{d:`M${x-PW/2+2} ${y0}L${x-2.4} ${yb}Q${x} ${y1} ${x+2.4} ${yb}L${x+PW/2-2} ${y0}Z`,fill:`url(#${id}${a?"cream":"red"})`,stroke:INK,"stroke-width":.9,"stroke-opacity":".7"},g);}
+    // umbra interioară: linii late, pe jumătate tăiate de margine
+    [22,19,16,13.5,11,9,7,5.2,3.6,2.2].forEach((sw,j)=>el("rect",Object.assign({rx:RX,fill:"none",stroke:"#000","stroke-opacity":.045+j*.006,"stroke-width":sw},box),g));
+    el("rect",Object.assign({rx:RX,fill:"none",stroke:INK,"stroke-width":1.2},box),svg);});
+  for(let n=1;n<=24;n++)engr(svg,px(n),isTop(n)?TOP/2:BOT+TOP/2,n,(opt.dests||[]).includes(n)?{fill:"#ead08f"}:{});
+  if(opt.pips){engr(svg,BARX,fy(BOT-14),opt.pips[0],{scale:.95,cls:"pip"});engr(svg,BARX,fy(TOP+14),opt.pips[1],{scale:.95,cls:"pip"});}
   // destinații: triunghi luminat + cerc pulsând unde aterizează piesa
   (opt.dests||[]).forEach(n=>{const x=px(n),t=isTop(n);
     el("polygon",{points:`${x-PW/2+1.5},${t?TOP:BOT} ${x+PW/2-1.5},${t?TOP:BOT} ${x},${t?TOP+PH:BOT-PH}`,fill:"#fff1c7","fill-opacity":n===opt.hot?".75":".5",stroke:"#ffe08a","stroke-width":n===opt.hot?"3":"2.2","stroke-linejoin":"round",filter:`url(#${id}glow)`},svg);});
@@ -858,8 +878,9 @@ function drawBoard(svg,pos,opt={}){
     el("polygon",{points:`${x-PW/2+1.5},${t?TOP:BOT} ${x+PW/2-1.5},${t?TOP:BOT} ${x},${t?TOP+PH:BOT-PH}`,fill:"#fff","fill-opacity":".13"},svg);});
   (opt.zones||[]).forEach(n=>{const x=px(n),t=isTop(n);
     el("polygon",{points:`${x-PW/2+1.5},${t?TOP:BOT} ${x+PW/2-1.5},${t?TOP:BOT} ${x},${t?TOP+PH:BOT-PH}`,fill:"#ead08f","fill-opacity":".34",stroke:"#ead08f","stroke-width":"2","stroke-linejoin":"round",filter:`url(#${id}glow)`},svg);
-    el("rect",{x:x-12,y:t?4:406,width:24,height:15,rx:5,fill:"#ead08f"},svg);const tx=el("text",{x,y:t?15:417,"text-anchor":"middle","font-size":"10.5","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:"#1c150b"},svg);tx.textContent=n;});
-  if(opt.zoneBar)el("rect",{x:X0+HALF+2,y:TOP,width:BARW-4,height:BOT-TOP,rx:8,fill:"#ead08f","fill-opacity":".18",stroke:"#ead08f","stroke-width":"2",filter:`url(#${id}glow)`},svg);
+    el("rect",{x:x-12,y:t?1.5:407.5,width:24,height:15,rx:5,fill:"#ead08f"},svg);const tx=el("text",{x,y:t?12.5:418.5,"text-anchor":"middle","font-size":"10.5","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:"#1c150b"},svg);tx.textContent=n;});
+  if(opt.zoneBar)el("rect",{x:X0+HALF+1,y:TOP,width:BARW-2,height:BOT-TOP,rx:8,fill:"#ead08f","fill-opacity":".18",stroke:"#ead08f","stroke-width":"2",filter:`url(#${id}glow)`},svg);
+  if(opt.dice)boardDice(svg,opt.dice);
   for(let n=1;n<=24;n++){
     [["you",pos.p[n]],["opp",pos.o[n]]].forEach(([who,c])=>{
       if(!c)return;
@@ -867,31 +888,24 @@ function drawBoard(svg,pos,opt={}){
         const top=k===c-1,sel=top&&who==="you"&&opt.selected===n;
         if(sel){el("circle",{cx:s.x,cy:s.y-6,r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);}
         if(top&&who==="you"&&(opt.hintFrom||[]).includes(n))el("circle",{class:"hintring",cx:s.x,cy:s.y-(sel?6:0),r:R+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
-        checker(svg,id,s.x,s.y,who,R-.5,Object.assign({"data-n":n,"data-w":who},top&&(opt.land||[]).includes(n)?{class:"ck land"}:{}),sel?6:0);
+        checker(svg,id,s.x,s.y,who,R,Object.assign({"data-n":n,"data-w":who},top&&(opt.land||[]).includes(n)?{class:"ck land"}:{}),sel?6:0);
       }
       if(c>5){const s=slot(n,c-1,c),up=who==="you"&&opt.selected===n?6:0;const tx=el("text",{x:s.x,y:s.y+4.5-up,"text-anchor":"middle","font-size":"13","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:ckWho(svg,who)==="you"?"#4a3d27":"#efe7d4"},svg);tx.textContent=c;}
     });
   }
 
-  // tava pentru piesele scoase (dreapta): sus adversarul, jos tu
-  const TX=518,TW=28;
-  [[FLIP?BOT-PH:TOP,"opp",pos.oOff||0],[FLIP?TOP:BOT-PH,"you",pos.pOff||0]].forEach(([ty,who,cnt])=>{
-    el("rect",{x:TX,y:ty,width:TW,height:PH,rx:6,fill:"#0d0805"},svg);
-    el("rect",{x:TX+.5,y:ty+.5,width:TW-1,height:PH-1,rx:5.5,fill:"none",stroke:"#000","stroke-opacity":".6"},svg);
-    el("rect",{x:TX,y:ty,width:TW,height:5,rx:3,fill:"#000","fill-opacity":".35"},svg);
-    const top=ty===TOP,step=9.6,gy=top?ty+4:ty+PH-4-8.4;
-    for(let k=0;k<cnt;k++){const y=top?gy+k*step:gy-k*step,tp=el("g",{class:"tp","data-w":who},svg);
-      el("rect",{x:TX+2.5,y:y+1.5,width:TW-5,height:8.4,rx:3,fill:"#000","fill-opacity":".45"},tp);
-      el("rect",{x:TX+2.5,y,width:TW-5,height:8.4,rx:3,fill:CK[ckWho(svg,who)].face,stroke:INK,"stroke-width":".9"},tp);
-      el("rect",{x:TX+3.2,y:y+5.6,width:TW-6.4,height:2.2,rx:1,fill:CK[ckWho(svg,who)].side},tp);}
-    if(cnt){const ly=top?ty+4+cnt*step+11:ty+PH-4-cnt*step-4;
-      const t=el("text",{x:TX+TW/2,y:ly,"text-anchor":"middle","font-size":"11","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:who==="you"?"#efe7d4":"#9aab9f"},svg);t.textContent=cnt;}
+  // piesele scoase stau pe muchie; umbra e pe capete, ca să nu intre peste piesa următoare
+  [["opp",pos.oOff||0],["you",pos.pOff||0]].forEach(([who,cnt])=>{const w=ckWho(svg,who),Y=w==="you",sw=2*R,h=Y?8:6.8; // la negre umbra se contopește cu piesa
+    for(let k=0;k<cnt;k++){const c=trayPos(who,k),x=c.x-R,y=c.y-h/2,tp=el("g",{class:"tp","data-w":who},svg);
+      el("rect",{x:x-2.2,y:y+.3,width:sw+4.4,height:h-.6,rx:(h-.6)/2,fill:"#000","fill-opacity":Y?".9":".55"},tp);
+      el("rect",{x,y,width:sw,height:h,rx:h/2,fill:`url(#${id}slab-${w})`,stroke:INK,"stroke-width":.8},tp);
+      [.2,.8].forEach(f=>el("line",{x1:x+sw*f,x2:x+sw*f,y1:y+1.2,y2:y+h-1.2,stroke:Y?"#8c7f62":"#000","stroke-opacity":".55","stroke-width":.7},tp));
+      el("line",{x1:x+h/2,x2:x+sw-h/2,y1:y+1.3,y2:y+1.3,stroke:"#fff","stroke-opacity":Y?".35":".12","stroke-width":.7},tp);}
+    if(cnt){const c=trayPos(who,cnt-1),t=el("text",{x:c.x,y:c.y>MID?c.y-9:c.y+17,"text-anchor":"middle","font-size":"11","font-weight":"800","font-family":"Hanken Grotesk, sans-serif",fill:who==="you"?"#efe7d4":"#9aab9f"},svg);t.textContent=cnt;}
   });
-  if(opt.zoneTray)el("rect",{x:TX-3,y:TOP-3,width:TW+6,height:BOT-TOP+6,rx:9,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
-  const bx=X0+HALF+BARW/2;
-  for(let k=0;k<pos.oBar;k++)checker(svg,id,bx,fy(TOP+54+k*30),"opp",13,{"data-n":"bar","data-w":"opp"});
-  for(let k=0;k<pos.pBar;k++)checker(svg,id,bx,fy(BOT-54-k*30),"you",13,{"data-n":"bar","data-w":"you"});
-  if(pos.pBar&&(opt.hintFrom||[]).includes(25))el("circle",{class:"hintring",cx:bx,cy:fy(BOT-54-(pos.pBar-1)*30),r:17,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);
+  if(opt.zoneTray){const w=wells()[trayPos("you",0).y>MID?3:2];el("rect",{x:w.x,y:w.y,width:w.w,height:w.h,rx:RX,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);}
+  [["opp",pos.oBar],["you",pos.pBar]].forEach(([who,cnt])=>{for(let k=0;k<cnt;k++){const c=barPos(who,k);checker(svg,id,c.x,c.y,who,R*BS,{"data-n":"bar","data-w":who});}});
+  if(pos.pBar&&(opt.hintFrom||[]).includes(25)){const c=barPos("you",pos.pBar-1);el("circle",{class:"hintring",cx:c.x,cy:c.y,r:R*BS+4,fill:"none",stroke:"#ead08f","stroke-width":"2.5",filter:`url(#${id}glow)`},svg);}
 }
 
 /* ================= ZARURI ================= */
@@ -906,8 +920,7 @@ function sig(q){return q.p.join(",");}
 function miniDie(parent,x,y,v,sz=20){const g=el("g",{transform:`translate(${x},${y})`},parent);
   el("rect",{x:-sz/2,y:-sz/2+2.5,width:sz,height:sz,rx:5,fill:"#b9ad8f",stroke:INK,"stroke-width":"1.2"},g);
   el("rect",{x:-sz/2,y:-sz/2,width:sz,height:sz,rx:5,fill:"#e9e1cf",stroke:INK,"stroke-width":"1.2"},g);
-  const P={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]}[v];
-  P.forEach(([a,b])=>el("circle",{cx:a*sz*.27,cy:b*sz*.27,r:sz*.095,fill:"#1a130e"},g));return g;}
+  PIPS[v].forEach(([a,b])=>el("circle",{cx:a*sz*.27,cy:b*sz*.27,r:sz*.095,fill:"#1a130e"},g));return g;}
 function demoHops(not,roll){let rem=roll.slice().sort((a,b)=>b-a);const hops=[];
   parse(not).forEach(([a,b],si)=>{const d=a-b,i=rem.indexOf(d);
     if(i>=0){hops.push({from:a,to:b,die:d,seg:si,first:true});rem.splice(i,1);}
@@ -1075,7 +1088,8 @@ document.addEventListener("toggle",e=>{if(e.target.tagName==="DETAILS")SFX.open(
    S: starea (pos, seqs, max, steps, turnStart, sel, drag, anim, last). Regulile vin din ENG.plays. */
 function svgPt(svg,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
 function pointAt(x,y){let half,i;if(x>=X0&&x<X0+HALF){half=0;i=Math.floor((x-X0)/PW);}else if(x>=X0+HALF+BARW&&x<X0+HALF*2+BARW){half=1;i=Math.floor((x-X0-HALF-BARW)/PW);}else return null;const idx=half*6+i;return fy(y)<(TOP+BOT)/2?13+idx:12-idx;}
-function pointAtFull(x,y){if(x>=X0+HALF&&x<X0+HALF+BARW)return 25;if(x>=518-4)return 0;return pointAt(x,y);}
+// bara e îngustă: la mijloc, unde stau piesele lovite, zona de atins e cât o piesă
+function pointAtFull(x,y){if(Math.abs(x-BARX)<=(Math.abs(y-MID)<2*R?R:BARW/2))return 25;if(x>=FR)return 0;return pointAt(x,y);}
 function makeMover(cfg){
   const S=cfg.S;const svg=()=>document.getElementById(cfg.svg);const wrap=document.getElementById(cfg.wrap);
   const same=sq=>{for(let i=0;i<S.steps.length;i++){const a=sq[i],b=S.steps[i];if(!a||a[0]!==b[0]||a[1]!==b[1]||a[2]!==b[2])return false;}return true;};
@@ -1090,10 +1104,10 @@ function makeMover(cfg){
     let shown=S.pos;const dragging=S.drag&&S.drag.moved;
     if(dragging){shown=clone(S.pos);if(S.drag.from===25)shown.pBar--;else shown.p[S.drag.from]--;}
     const r=cfg.active()&&S.sel!=null?[...reach(S.sel).keys()]:[];
-    const opt=Object.assign({selected:dragging?null:(S.sel>=1&&S.sel<=24?S.sel:null),selBar:S.sel===25&&!dragging,dests:r.filter(t=>t>=1),zoneTray:r.includes(0),hot:dragging?S.drag.hot:null,last:S.lastMv,land:S.lastLand!=null?[S.lastLand]:[]},cfg.extra?cfg.extra():{},extra);S.lastLand=null;
+    const opt=Object.assign({selected:dragging?null:(S.sel>=1&&S.sel<=24?S.sel:null),selBar:S.sel===25&&!dragging,dests:r.filter(t=>t>=1),zoneTray:r.includes(0),hot:dragging?S.drag.hot:null,last:S.lastMv,land:S.lastLand!=null?[S.lastLand]:[]},cfg.base?cfg.base():{},cfg.extra?cfg.extra():{},extra);S.lastLand=null;
     drawBoard(svg(),shown,opt);
     if(dragging)S.drag.ghost=checker(svg(),cfg.svg,0,0,"you",R+1.5,{style:"pointer-events:none",transform:`translate(${S.drag.x},${S.drag.y})`},9);}
-  function anim(pos,moves,cb){animateMoves(svg(),pos,moves,{},cb);}
+  function anim(pos,moves,cb){animateMoves(svg(),pos,moves,cfg.base?cfg.base():{},cb);}
   function doStep(from,to,animate){const chain=reach(from).get(to);if(!chain)return false;S.lastMv=null;S.redo=[];S.lastLand=to>=1&&to<=24?to:null;
     chain.forEach(m=>S.steps.push(m));const am=chain.map(m=>["y",m[0],m[1],m[2]]);
     const fin=p=>{S.pos=p;S.sel=null;if(S.steps.length<S.max&&to>=1&&next().some(x=>x[0]===to))S.sel=to;S.anim=false;draw();cfg.onChange&&cfg.onChange();
@@ -1114,7 +1128,7 @@ function makeMover(cfg){
   wrap.style.touchAction="none";
   const pt=e=>svgPt(svg(),e);
   // la scos: piesa lăsată oriunde în afara câmpurilor de joc iese de pe tablă
-  const offBoard=p=>p.x<X0||p.x>X0+2*HALF+BARW||p.y<TOP||p.y>BOT;
+  const offBoard=p=>p.x<X0||p.x>FR||p.y<TOP||p.y>BOT;
   const dropAt=(p,from)=>reach(from).has(0)&&offBoard(p)?0:pointAtFull(p.x,p.y);
   const blocked=e=>{const d=e.target.closest&&e.target.closest(".dthrow");return d&&!d.classList.contains("passive");};
   wrap.addEventListener("contextmenu",e=>e.preventDefault());
@@ -1310,13 +1324,12 @@ function applyMove(q,[w,f,t]){const r=clone(q);
   if(w==="y"){if(f===25)r.pBar--;else r.p[f]--;if(t===0)r.pOff++;else{if(r.o[t]===1){r.o[t]=0;r.oBar++;}r.p[t]++;}}
   else{if(f===0)r.oBar--;else r.o[f]--;if(t===25)r.oOff++;else{if(r.p[t]===1){r.p[t]=0;r.pBar++;}r.o[t]++;}}
   return r;}
-const TRAYX=532;
-function coordFrom(q,w,f){const bx=X0+HALF+BARW/2;
-  if(w==="y")return f===25?{x:bx,y:fy(BOT-54-(q.pBar-1)*30)}:slot(f,q.p[f]-1,q.p[f]);
-  return f===0?{x:bx,y:fy(TOP+54+(q.oBar-1)*30)}:slot(f,q.o[f]-1,q.o[f]);}
+function coordFrom(q,w,f){
+  if(w==="y")return f===25?barPos("you",q.pBar-1):slot(f,q.p[f]-1,q.p[f]);
+  return f===0?barPos("opp",q.oBar-1):slot(f,q.o[f]-1,q.o[f]);}
 function coordTo(base,w,t){
-  if(w==="y"){if(t===0)return{x:TRAYX,y:fy(BOT-8-base.pOff*9.6)};const hit=base.o[t]===1;return hit?slot(t,0,1):slot(t,base.p[t],base.p[t]+1);}
-  if(t===25)return{x:TRAYX,y:fy(TOP+8+base.oOff*9.6)};const hit=base.p[t]===1;return hit?slot(t,0,1):slot(t,base.o[t],base.o[t]+1);}
+  if(w==="y"){if(t===0)return trayPos("you",base.pOff);const hit=base.o[t]===1;return hit?slot(t,0,1):slot(t,base.p[t],base.p[t]+1);}
+  if(t===25)return trayPos("opp",base.oOff);const hit=base.p[t]===1;return hit?slot(t,0,1):slot(t,base.o[t],base.o[t]+1);}
 function tween(g,a,b,dur,arc,cb,tok,svg){const t0=performance.now();
   const st=now=>{if(svg._tok!==tok)return;const k=Math.min(1,(now-t0)/dur),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
     g.setAttribute("transform",`translate(${a.x+(b.x-a.x)*e},${a.y+(b.y-a.y)*e-Math.sin(Math.PI*e)*arc})`);if(k<1)requestAnimationFrame(st);else cb();};
@@ -1344,8 +1357,8 @@ function animateMoves(svg,pos,moves,opt,done){
       if(hit)SFX.hit();else if((w==="y"&&t===0)||(w==="o"&&t===25))SFX.off();else SFX.place();
       if(hit){const tmp=clone(nx);if(w==="y")tmp.oBar--;else tmp.pBar--;
         drawBoard(svg,tmp,Object.assign({},opt,{land:[t]}));
-        const vg=checker(svg,svg.id,0,0,w==="y"?"opp":"you",R);const bx=X0+HALF+BARW/2;
-        const vb=w==="y"?{x:bx,y:fy(TOP+54+(nx.oBar-1)*30)}:{x:bx,y:fy(BOT-54-(nx.pBar-1)*30)};
+        const vg=checker(svg,svg.id,0,0,w==="y"?"opp":"you",R);
+        const vb=w==="y"?barPos("opp",nx.oBar-1):barPos("you",nx.pBar-1);
         const flash=el("text",{x:b.x,y:b.y-26,"text-anchor":"middle","font-family":"Playfair Display, serif","font-style":"italic","font-size":"18",fill:"#efe7d4",stroke:"#3a0d10","stroke-width":"3","paint-order":"stroke"},svg);flash.textContent="Lovit";
         tween(vg,slot(t,0,1),vb,280,50,()=>{cur=nx;setTimeout(next,90);},tok,svg);}
       else{cur=nx;if(t<1||t>24){setTimeout(next,70);return;}
@@ -1862,8 +1875,8 @@ function fmtSeq(x,seq,mirror){ // notație: mirror=true -> în numerotarea ta pe
 function toAnim(seq,who){return seq.map(([s,t,d])=>who==="you"?["y",s,t,d]:["o",s===25?0:25-s,t===0?25:25-t,d]);}
 function jEl(id){return document.getElementById(id);}
 
-function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,{},cb);}
-function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();END.clear();Object.assign(G,{gameTok:(G.gameTok||0)+1,busy:false,evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null,two:S.mode==="doi",cur:1,hintsP:{1:3,2:3}});setView();renderMode();setEval(.5);
+function animJ(pos,moves,cb){animateMoves(jEl("jBoard"),pos,moves,jBase(),cb);}
+function newGame(){GNU.start();if(typeof hideTap==="function")hideTap();renderLevel();DICE3D.clear();END.clear();Object.assign(G,{gameTok:(G.gameTok||0)+1,busy:false,evalTok:(G.evalTok||0)+1,pos:clone(START),turn:null,phase:"opening",dice:null,openDice:null,lastDice:null,seqs:[],max:0,steps:[],sel:null,hist:[],hints:3,turnHinted:false,hint:null,pYou:.5,over:null,drag:null,anim:false,lastMv:null,two:S.mode==="doi",cur:1,hintsP:{1:3,2:3}});setView();renderMode();setEval(.5);
   jBoardDraw();renderJ();jEl("jFb").innerHTML="";jEl("jLog").innerHTML="";jEl("jOver").hidden=true;
   setStatus("Aruncați câte un zar. Cine dă mai mare începe.");offerRoll(600);}
 function setStatus(t){jEl("jStatus").innerHTML=t;}
@@ -1873,9 +1886,7 @@ function evalAfter(pos,side,d,key,fallback){const tok=++G.evalTok,fl=G.two&&G.cu
   gnuAnalyze(pos,side,d[0],d[1]).then(list=>{const m=list&&list.find(e=>e.key===key);evalShow(mine(m?m.win:fallback),tok);});}
 function setEval(p){G.pYou=p;const pc=Math.round(p*100);jEl("evFill").style.width=pc+"%";jEl("evYou").textContent=pc+"%";jEl("evBot").textContent=(100-pc)+"%";}
 function renderJ(){
-  const ctl=jEl("jCtl");const d=G.dice;
-  const d3=S.dice3d!==false&&DICE3D.available();jEl("jDice").classList.toggle("big",!d3);jEl("jDice").classList.toggle("mini",d3);
-  jEl("jDice").innerHTML=d?diceHTML(d.length===4?[d[0],d[0]]:d,[],G.justRolled&&!d3):"";G.justRolled=false;
+  const ctl=jEl("jCtl");
   if(G.hint&&G.hint.reset&&!G.steps.length)G.hint.reset=false;
   if(G.hint&&!G.hint.reset&&G.hint.at!==G.steps.length){G.hint=null;if(G.phase==="move")setStatus(G.pos.pBar?"Ești pe bară: intră întâi cu piesa de pe bară.":"Rândul tău.");}
   if(G.phase==="move")ctl.innerHTML=`${hintBtn()}<div class="urpair" role="group" aria-label="Mutări"><button class="btn ghost small ur" id="jUndo" type="button" aria-label="Înapoi" title="Înapoi (Ctrl+Z)"${G.steps.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="btn ghost small ur" id="jRedo" type="button" aria-label="Refă" title="Refă (Ctrl+Y)"${G.redo&&G.redo.length?"":" disabled"}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></div>${S.autoOk!==false?"":`<button class="btn green small" id="jOk" type="button" ${G.steps.length===G.max?"":"disabled"}>Confirmă</button>`}`;
@@ -1886,6 +1897,11 @@ function renderJ(){
   const ok=jEl("jOk");if(ok)ok.addEventListener("click",confirmMove);
 }
 function jBoardDraw(extra={}){JM.draw(extra);}
+// ce stă mereu pe tabla de joc: zarurile și pip count-ul (din poziția întreagă, fără piesa ridicată)
+function jBase(){const o={dice:boardDiceOf()};if(S.pipBoard!==false)o.pips=pips(G.pos);return o;}
+function boardDiceOf(){if(G.openDice)return G.openDice.map((v,i)=>({v,used:false,side:i?"opp":"you"}));
+  if(G.dice){const bot=G.turn==="bot",u=bot?[]:JM.used(G.dice);return G.dice.map((v,i)=>({v,used:!!u[i],side:bot?"opp":"you"}));}
+  return(G.lastDice||[]).map(v=>({v,used:true,side:"opp"}));}
 const BULB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
 function hintBtn(){const ok=GNU.status()==="ready",dis=!ok||G.steps.length===G.max||(G.hints<=0&&!G.turnHinted),t=ok?`Hint (${G.hints} rămase)`:"Hint indisponibil";
   return `<button class="btn ghost small hintbtn" id="jHint" type="button" aria-label="${t}" title="${t}"${dis?" disabled":""}>${BULB}<span>${G.hints}</span></button>`;}
@@ -1901,26 +1917,25 @@ async function useHint(){if(G.phase!=="move"||G.anim||G.hintBusy||GNU.status()!=
   G.hint={level,at:r.reset?0:G.steps.length,rest:r.rest,not:r.not,reset:r.reset};
   setStatus(r.reset?`Ce ai mutat nu duce la o mutare bună. Dă Înapoi până la început. Cea mai bună: <b>${r.not}</b>.`:level===1?"Mută piesele luminate. Apasă din nou pentru mutarea întreagă.":`${r.best?"Cea mai bună":"Bună de aici"}: <b>${r.not}</b>`);
   renderJ();if(!G.anim)jBoardDraw();}
-async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";
+async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";G.openDice=null;jBoardDraw();
   const tok=G.gameTok,d3=S.dice3d!==false&&DICE3D.available();let a,b;
   const two=G.two,LA=two?PN[1]:"Tu",LB=two?PN[2]:"Bot";
   if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:[LA],text:S.autoRoll===true?"":two?`Aruncă, ${PN[1]}`:"Aruncă zarul tău"});if(tok!==G.gameTok)return;
     setStatus(two?`${PN[1]} a dat <b>${a}</b>. Acum aruncă ${PN[2]}.`:`Ai dat <b>${a}</b>. Acum aruncă botul…`);
     [b]=await DICE3D.throwDice(two?{keep:true,side:S.fixedBoard===true?"bot":"you",auto:S.autoRoll===true,slots:[1],tints:["bot"],keepOthers:true,labels:[LB],text:S.autoRoll===true?"":`Aruncă, ${PN[2]}`}:{keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
-    setTimeout(()=>DICE3D.clear(),a===b?700:1100);}
+    DICE3D.clear();}
   else{SFX.roll();a=rollDie();await new Promise(r=>setTimeout(r,250));b=rollDie();if(tok!==G.gameTok)return;}
-  G.busy=false;renderJ();
-  jEl("jDice").innerHTML=`<span class="oroll"><small>${LA}</small>${dieSVG(a,"roll")}</span><span class="oroll"><small>${LB}</small>${dieSVG(b,"roll")}</span>`;
+  G.busy=false;G.openDice=[a,b];renderJ();jBoardDraw();
   if(a===b){setStatus(`Egalitate (${a}-${b}). Mai aruncați o dată.`);offerRoll(1100);return;}
   G.phase="wait";jEl("jCtl").innerHTML="";
   setTimeout(()=>{if(tok!==G.gameTok)return;
     if(two){const w=a>b?1:2;if(w===2){G.cur=2;G.pos=mirrorPos(G.pos);setView();}setStatus(`<b>Începe ${PN[w]}</b> cu ${Math.max(a,b)}-${Math.min(a,b)}.`);startYourTurn(w===1?[a,b]:[b,a]);return;}
     if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
-    else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},450);}
+    else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},900);}
 async function yourRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").innerHTML="";const tok=G.gameTok;const d=await rollPair({side:jEl("jBoard").dataset.flip?"bot":"you",auto:S.autoRoll===true,tints:G.two&&G.cur===2?["bot","bot"]:undefined});if(tok!==G.gameTok)return;G.busy=false;startYourTurn(d);}
-function startYourTurn(d){G.turn="you";G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;G.turnHinted=false;G.hint=null;
+function startYourTurn(d){G.turn="you";G.openDice=G.lastDice=null;G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.turnStart=clone(G.pos);G.steps=[];G.sel=null;G.turnHinted=false;G.hint=null;
   const max=JM.begin(G.pos,d[0],d[1]);
-  if(max===0){G.phase="wait";renderJ();setStatus(G.two?`${PN[G.cur]} are ${d[0]}-${d[1]} și <b>nu poate muta</b>.`:`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
+  if(max===0){G.phase="wait";renderJ();jBoardDraw();setStatus(G.two?`${PN[G.cur]} are ${d[0]}-${d[1]} și <b>nu poate muta</b>.`:`Ai ${d[0]}-${d[1]}, dar <b>nu poți muta</b>. Rândul trece la bot.`);
     G.hist.push({who:"you",pl:G.cur,dice:d,before:clone(G.pos),seq:[],forced:true,cls:FORCED,loss:0,not:"(nu poate muta)"});logRender();const tok=G.gameTok;setTimeout(()=>{if(tok===G.gameTok)(G.two?nextPlayer:botTurn)();},1400);return;}
   G.phase="move";renderJ();jBoardDraw();
   setStatus(G.pos.pBar?(G.two?`${PN[G.cur]}, ești pe bară: intră întâi cu piesa de pe bară.`:"Ești pe bară: intră întâi cu piesa de pe bară."):G.two?`Rândul lui <b>${PN[G.cur]}</b>.`:"Rândul tău.");}
@@ -1931,7 +1946,7 @@ function nextPlayer(){const tok=G.gameTok;if(G.phase==="over")return;
   setView();G.phase="roll";G.dice=null;DICE3D.clear();renderJ();jBoardDraw();
   if(!reduce&&S.fixedBoard!==true)jEl("jBoard").animate([{opacity:.35},{opacity:1}],{duration:260,easing:"ease-out"});
   setStatus(`Rândul lui <b>${PN[G.cur]}</b>.`);if(tok===G.gameTok)offerRoll(250);}
-const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,extra:hintOpt,
+const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,base:jBase,extra:hintOpt,
   onComplete:()=>{if(S.autoOk!==false)setTimeout(()=>{if(G.phase==="move"&&G.steps.length===G.max&&!G.anim)confirmMove();},280);}});
 function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
   const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;const x0=ENG.canonFor(G.turnStart,"you");
@@ -1963,9 +1978,9 @@ function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
   setTimeout(()=>{if(tok===G.gameTok)botTurn();},250);}
 function showMoveBadge(h){const c=h.cls;
   jEl("jFb").innerHTML=`<div class="mvbadge" style="--c:${c.col}"><span class="mvsym">${c.sym}</span><div><b>${c.ro}</b><span class="mono">${h.not}</span>${h.loss>0.5&&c.id!=="forced"?`<small>Mai bună: <span class="mono">${h.bestNot}</span></small>`:""}</div></div>`;}
-async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";renderJ();
+async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";G.dice=G.openDice=null;renderJ();jBoardDraw();
   if(!d){d=await rollPair({side:"bot",auto:true});if(tok!==G.gameTok)return;}
-  setTimeout(async()=>{if(tok!==G.gameTok)return;G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;G.justRolled=true;renderJ();
+  setTimeout(async()=>{if(tok!==G.gameTok)return;G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;renderJ();jBoardDraw();
     const x=ENG.canonFor(G.pos,"bot");let seq=null,p=null,pGnu=false;
     if((G.level==="greu"||G.level==="expert")&&GNU.status()==="ready"){setStatus("Botul se gândește (GNU)…");const list=await gnuAnalyze(G.pos,"bot",d[0],d[1]);
       if(list&&list.length){let pick=list[0];if(G.level==="greu"){const ok=list.filter(m=>m.diff>=-.04);pick=ok[rngInt(ok.length)];}
@@ -1975,7 +1990,7 @@ async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";renderJ
     const before=clone(G.pos);const not=fmtSeq(x,seq,true);
     setStatus(seq.length?`Botul are ${d[0]}-${d[1]}: <span class="mono">${not}</span>`:`Botul are ${d[0]}-${d[1]} și nu poate muta.`);
     const fin=()=>{if(tok!==G.gameTok)return;DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});if(pGnu){++G.evalTok;setEval(1-p);}else evalAfter(before,"bot",d,ENG.key(ENG.apply(x,seq)),p);logRender();
-      if(checkOver())return;G.phase="roll";G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
+      if(checkOver())return;G.phase="roll";G.lastDice=G.dice;G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
     if(seq.length)setTimeout(()=>animJ(G.pos,toAnim(seq,"bot"),fin),150);else setTimeout(fin,700);
   },150);}
 // marț tehnic / linie tehnică: câte 2 (resp. 1) piese pe fiecare punct din casă, restul scoase = câștig pe loc
@@ -1987,7 +2002,7 @@ function techWin(pos,side){const home=side==="you"?[1,2,3,4,5,6].map(i=>pos.p[i]
 // peste tabla de joc se pune o copie a ei în poziția finală; piesele spun ce s-a întâmplat, apoi cade placheta de alamă.
 // rămâne până la Joc nou. Cu mișcare redusă se vede direct starea finală.
 const END=(()=>{
-  const TX=518,TW=28,BR="#ead08f",word=n=>n===1?"1 punct":n+" puncte";let tok=0,uid=0,svgEnd=null;
+  const BR="#ead08f",word=n=>n===1?"1 punct":n+" puncte";let tok=0,uid=0,svgEnd=null;
   const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
   function tween(dur,fn,delay=0){const t=tok;if(reduce){fn(1);return Promise.resolve();}
     return new Promise(res=>setTimeout(()=>{if(t!==tok)return res();const t0=performance.now();
@@ -2037,9 +2052,8 @@ const END=(()=>{
     await tween(win?620:900,k=>shine.setAttribute("transform",`translate(${(w+140)*ease(k)},0)`));
     if(win)for(let n=2;n<=pts;n++){await wait(220);if(!live(t0))return;s.textContent=word(n);SFX.place();squash(s,200,2);sparks(L,cx,y+h-26,10,.8,g);}
     if(reduce)s.textContent=win?word(pts):sub;}
-  function trayTop(who,cnt){return fy(who==="you"?BOT-8-cnt*9.6:TOP+8+cnt*9.6);}
   async function myFinish(L){const trays=[...L.root.querySelectorAll('.tp[data-w="you"]')];
-    sparks(L,TX+TW/2,trayTop("you",trays.length),18);shake(L,3,220);glow(L,.24);
+    sparks(L,TX+TW/2,trayPos("you",trays.length).y,18);shake(L,3,220);glow(L,.24);
     for(const t of trays.reverse()){squash(t,170,1.6);await wait(32);}}
   const RUN={
     async win(L){await myFinish(L);await wait(150);},
@@ -2054,7 +2068,7 @@ const END=(()=>{
       for(let r=0;r<3;r++){stuck.forEach(c=>{ring(L,c.x,c.y,"#d2453b",460,0,c.rx+1,c.rx+14);jitter(c,300,3);});
         await tween(300,k=>fl.forEach(f=>{const v=Math.sin(Math.PI*k);f.setAttribute("fill-opacity",.75*v);f.setAttribute("stroke-opacity",v);}));}
       fl.forEach(f=>f.remove());shake(L,4,220);await wait(150);},
-    async mt(L){const all=L.pieces("you"),t0=tok;shadowsDown(L,all);const H=c=>18+(Math.abs(c.y-fy(BOT-R-1))>10?4:0);
+    async mt(L){const all=L.pieces("you"),t0=tok;shadowsDown(L,all);const H=c=>18+(Math.abs(c.y-slot(+c.n,0,1).y)>10?4:0);
       for(let n=6;n>=1;n--){all.filter(c=>+c.n===n).forEach(c=>tween(280,k=>lift(c,H(c)*ease(k))));await wait(120);}
       await wait(180);await tween(500,k=>all.forEach((c,i)=>lift(c,H(c)+2.5*Math.sin(k*Math.PI*2+i*.5)*Math.sin(Math.PI*k))));
       await Promise.all(all.map(c=>tween(130,k=>lift(c,H(c)*(1-k*k)))));if(!live(t0))return;SFX.hit();all.forEach(c=>squash(c.g,180,1.4));
@@ -2075,7 +2089,7 @@ const END=(()=>{
   async function play(kind,title,sub,pts,win){clear();const t0=tok,wrap=jEl("jWrap");
     svgEnd=el("svg",{id:"jEnd",class:"board endfx",viewBox:"0 0 552 424","aria-hidden":"true"});wrap.insertBefore(svgEnd,jEl("jTap"));
     if(jEl("jBoard").dataset.swap)svgEnd.dataset.swap="1";if(jEl("jBoard").dataset.flip)svgEnd.dataset.flip="1";drawBoard(svgEnd,G.pos,{});const root=el("g",{},svgEnd);[...svgEnd.children].forEach(ch=>{if(ch!==root&&ch.tagName!=="defs")root.appendChild(ch);});
-    const L={root,fx:el("g",{},root),dim:el("rect",{x:0,y:0,width:552,height:424,rx:18,fill:"#000","fill-opacity":0},root),top:el("g",{},root),plaque:el("g",{},root),
+    const L={root,fx:el("g",{},root),dim:el("rect",{x:0,y:0,width:552,height:424,rx:RXO,fill:"#000","fill-opacity":0},root),top:el("g",{},root),plaque:el("g",{},root),
       pieces:who=>[...root.querySelectorAll(`.ck[data-w="${who}"]`)].map(piece)};
     try{await RUN[kind](L);if(live(t0))await plaque(L,title,sub,pts,win);}catch(e){console.error(e);}}
   return{play,clear};
@@ -2120,6 +2134,7 @@ jEl("jDice3d").addEventListener("change",e=>{S.dice3d=e.target.checked;save();re
 jEl("jMartT").checked=S.martTehnic===true;jEl("jMartT").addEventListener("change",e=>{S.martTehnic=e.target.checked;save();});
 jEl("jLinieT").checked=S.linieTehnica===true;jEl("jLinieT").addEventListener("change",e=>{S.linieTehnica=e.target.checked;save();});
 jEl("jFixed").checked=S.fixedBoard===true;jEl("jFixed").addEventListener("change",e=>{S.fixedBoard=e.target.checked;save();renderLevel();if(G.two){setView();if(!G.anim)jBoardDraw();}});
+jEl("jPipB").checked=S.pipBoard!==false;jEl("jPipB").addEventListener("change",e=>{S.pipBoard=e.target.checked;save();if(!G.anim)jBoardDraw();});
 jEl("jSound").checked=S.sound!==false;jEl("jSound").addEventListener("change",e=>{S.sound=e.target.checked;save();});
 jEl("jAutoRoll").checked=S.autoRoll===true;jEl("jAutoRoll").addEventListener("change",e=>{S.autoRoll=e.target.checked;save();if(S.autoRoll)offerRoll();});
 // rândul tău: zarurile apar direct pe tablă. Le atingi (2D) sau le arunci cu mâna (3D); pe automat se aruncă singure.
