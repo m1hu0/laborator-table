@@ -849,12 +849,11 @@ function engr(p,x,y,txt,o={}){const size=10*(o.scale||1);y+=size*.36;
   if(!o.fill)el("text",Object.assign({},a,{y:y+.6,fill:"#fff","fill-opacity":".06"}),p).textContent=txt;
   el("text",Object.assign({},a,{y,fill:o.fill||"#1a110b","fill-opacity":o.fill?1:.85,class:o.cls||"num"}),p).textContent=txt;}
 const PIPS={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]};
-// zarurile de pe tablă: în dreapta ale tale, în stânga ale adversarului; opt.dice=[{v,used,side}]
-function boardDice(svg,dice){["you","opp"].forEach(side=>{const ds=dice.filter(d=>d.side===side),n=ds.length,k=n>2?.75:1,cx=side==="you"?X0+HALF+BARW+HALF/2:X0+HALF/2;
-  ds.forEach((d,i)=>{const g=el("g",{class:"bd-die","data-v":d.v,"data-used":d.used?1:0,opacity:d.used?.4:1,transform:`translate(${cx+(i-(n-1)/2)*40*k},${MID+(i%2?1:-1)}) rotate(${[-8,11,-5,7][i]})`},svg),z=30*k,
-      rc=(dx,dy,fill,o)=>el("rect",Object.assign({x:-z/2+dx,y:-z/2+dy,width:z,height:z,rx:7*k,fill},o),g);
-    rc(2,4,"#000",{"fill-opacity":".3"});rc(0,2.5,"#b0a385",{stroke:INK,"stroke-width":1.3});rc(0,0,"#ddd3bd",{stroke:INK,"stroke-width":1.3});
-    PIPS[d.v].forEach(([a,b])=>el("circle",{cx:a*8*k,cy:b*8*k,r:2.8*k,fill:"#2a1614"},g));});});}
+// zarurile desenate (când cele 3D sunt oprite): în dreapta ale tale, în stânga ale adversarului; opt.dice=[{v,used,side}]
+function boardDice(svg,dice){["you","opp"].forEach(side=>{const ds=dice.filter(d=>d.side===side),n=ds.length,cx=side==="you"?X0+HALF+BARW+HALF/2:X0+HALF/2;
+  ds.forEach((d,i)=>{const g=el("g",{class:"bd-die","data-v":d.v,"data-used":d.used?1:0,opacity:d.used?.4:1,transform:`translate(${cx+(i-(n-1)/2)*28},${MID})`},svg);
+    el("rect",{x:-11,y:-11,width:22,height:22,rx:4.5,fill:"#c9bda1",stroke:INK,"stroke-width":1.2},g);
+    PIPS[d.v].forEach(([a,b])=>el("circle",{cx:a*6,cy:b*6,r:2,fill:"#2a1614"},g));});});}
 function drawBoard(svg,pos,opt={}){
   setFlip(svg);const id=svg.id,df=svg.querySelector(":scope>defs");svg.replaceChildren(...(df?[df]:[]));if(!df)defs(svg);
   // o singură suprafață de piele: rama, bara și marginea tăvii
@@ -1651,7 +1650,7 @@ const DICE3D=(()=>{
   const S_=.32,H=S_/2; // latura zarului (unități 3D) — o piesă are ~0,86
   let built=false,renderer,scene,camera,world,host,wrap,cv,hint,raf=0,last=0,mDieMat,wallBodies=[],mWall;
   const B={x0:-4.2,x1:4.2,z0:-3.1,z1:3.1};
-  let dice=[],state="idle",resolveFn=null,opts=null,hold=null,stillFrames=0,simT=0;
+  let dice=[],state="idle",resolveFn=null,opts=null,hold=null,stillFrames=0,simT=0,layout=null,slide=null;
   const FACES=[[1,0,0,5],[-1,0,0,2],[0,1,0,3],[0,-1,0,4],[0,0,1,6],[0,0,-1,1]];
   // zaruri cel-shaded: lumină în 3 trepte + contur (geometria mărită, cu fețele întoarse)
   let GEO_O=null,GEO_I=null,TOON=null;
@@ -1671,8 +1670,8 @@ const DICE3D=(()=>{
     // contextul pierdut nu revine pe telefon: aruncăm canvasul, aruncarea în curs se termină cu zaruri simple,
     // iar următoarea aruncare își face un canvas nou; după două pierderi rămânem pe zaruri 2D
     cv.addEventListener("webglcontextlost",e=>{e.preventDefault();cancelAnimationFrame(raf);raf=0;state="idle";hold=null;
-      const f=resolveFn,n=dice.filter(d=>d.active).length||2;resolveFn=null;host.remove();built=false;dice=[];wallBodies=[];lostCount++;lost=lostCount>=2;
-      if(f)f(Array.from({length:n},rollDie));});renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));
+      const f=resolveFn,n=dice.filter(d=>d.active).length||2;resolveFn=null;host.remove();built=false;dice=[];wallBodies=[];layout=null;slide=null;lostCount++;lost=lostCount>=2;
+      if(f)f(Array.from({length:n},rollDie));else jBoardDraw();});renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));
     renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.NoToneMapping;
     renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;
     scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(38,1.3,.1,100);
@@ -1697,14 +1696,14 @@ const DICE3D=(()=>{
     cv.addEventListener("pointermove",e=>{if(state!=="holding")return;const p=toWorld(e);if(!p)return;hold.tx=p.x;hold.tz=p.z;const now=performance.now();hold.hist.push({x:p.x,z:p.z,t:now});while(hold.hist.length>2&&now-hold.hist[0].t>110)hold.hist.shift();});
     const release=()=>{if(state!=="holding")return;const h=hold.hist,a=h[0],b=h[h.length-1];const dt=Math.max(.016,(b.t-a.t)/1000);launch((b.x-a.x)/dt,(b.z-a.z)/dt);hold=null;};
     cv.addEventListener("pointerup",release);cv.addEventListener("pointercancel",release);
-    window.addEventListener("resize",()=>{if(!host.hidden)size();});
+    new ResizeObserver(()=>{if(!host.hidden)size();}).observe(wrap);
     camera.fov=36;camera.position.set(0,10.8,3.2);camera.lookAt(0,0,.12);camera.updateProjectionMatrix();setWalls();
     built=true;}
   function setWalls(){wallBodies.forEach(b=>world.removeBody(b));wallBodies=[];
     const cx=(B.x0+B.x1)/2,cz=(B.z0+B.z1)/2,hw=(B.x1-B.x0)/2,hd=(B.z1-B.z0)/2;
     const wall=(x,y,z,hx,hy,hz)=>{const b=new CANNON.Body({mass:0,material:mWall});b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz)));b.position.set(x,y,z);world.addBody(b);wallBodies.push(b);};
     wall(B.x0-1,5,cz,1,10,hd+2);wall(B.x1+1,5,cz,1,10,hd+2);wall(cx,5,B.z0-1,hw+2,10,1);wall(cx,5,B.z1+1,hw+2,10,1);wall(cx,8,cz,hw+2,1,hd+2);}
-  let sw=0,sh=0;function size(){const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h||(w===sw&&h===sh))return;sw=w;sh=h;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(state==="kept")renderer.render(scene,camera);}
+  let sw=0,sh=0;function size(){const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h||(w===sw&&h===sh))return;sw=w;sh=h;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(layout)park(layout,true);else if(state==="kept")show();}
   function setTint(i,side){const d=dice[i];if(d.tint===side)return;d.tint=side;const u=d.mesh.userData;u.outer.material.color.set(side==="you"?0xe4d9c1:0x3a302a).convertSRGBToLinear();u.inner.material.color.set(side==="you"?0x0b0b0c:0xf2f2ef).convertSRGBToLinear();}
   function placeRest(side){const cx=(B.x0+B.x1)/2;dice.forEach((d,i)=>{if(!d.active)return;const b=d.body;b.position.set(cx+(i?.5:-.5),H,side==="you"?B.z1-1.1:B.z0+1.1);
     const f=FACES[rngInt(6)];const q=new CANNON.Quaternion();q.setFromVectors(new CANNON.Vec3(f[0],f[1],f[2]),new CANNON.Vec3(0,1,0));
@@ -1716,6 +1715,31 @@ const DICE3D=(()=>{
   function autoThrow(side){const dir=side==="bot"?1:-1;const a=dir*Math.PI/2+(rngFloat()-.5)*1.1;const s=7+rngFloat()*6;dice.forEach(d=>{if(d.active)d.body.position.y=1.2;});launch(Math.cos(a)*s,Math.sin(a)*s);}
   function readFace(b){let best=-2,val=0;FACES.forEach(([x,y,z,v])=>{const w=b.quaternion.vmult(new CANNON.Vec3(x,y,z));if(w.y>best){best=w.y;val=v;}});return{val,flat:best>.94&&b.position.y<H*1.5};}
   const tmpQ=new CANNON.Quaternion();
+  function show(){dice.forEach(d=>{d.mesh.position.copy(d.body.position);d.mesh.quaternion.copy(d.body.quaternion);});renderer.render(scene,camera);}
+  // punctul din scenă aflat deasupra unui punct de pe tablă
+  function boardPt(x,y){const b=jEl("jBoard").getBoundingClientRect(),r=cv.getBoundingClientRect(),ray=new THREE.Raycaster(),v=new THREE.Vector3();
+    ray.setFromCamera({x:((b.left+x/552*b.width-r.left)/r.width)*2-1,y:1-((b.top+y/424*b.height-r.top)/r.height)*2},camera);
+    ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-H),v);return v;}
+  // zarurile alunecă la mijlocul tablei, drepte: "you" în dreapta, "opp" în stânga, "split" câte unul pe parte
+  function park(l,now){if(!built||host.hidden)return Promise.resolve();layout=l;host.classList.add("passive");
+    const cR=X0+HALF+BARW+HALF/2,cL=X0+HALF/2;
+    const mv=dice.map((d,i)=>{const b=d.body,side=l==="split"?(i?cL:cR):(l==="you"?cR:cL)+(i?18:-18),t=boardPt(side,MID);
+      // cât se rotește în jurul verticalei ca muchiile să fie paralele cu tabla
+      const w=[[1,0,0],[0,1,0],[0,0,1]].map(a=>b.quaternion.vmult(new CANNON.Vec3(...a))).find(a=>Math.abs(a.y)<.5),a=Math.atan2(w.z,w.x),th=a-Math.round(a/(Math.PI/2))*Math.PI/2;
+      return{b,x:b.position.x,y:b.position.y,z:b.position.z,t,th,q:b.quaternion.clone()};});
+    const set=k=>mv.forEach(m=>{const e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,r=new CANNON.Quaternion();m.b.velocity.set(0,0,0);m.b.angularVelocity.set(0,0,0);
+      m.b.position.set(m.x+(m.t.x-m.x)*e,m.y+(H-m.y)*e,m.z+(m.t.z-m.z)*e);r.setFromAxisAngle(new CANNON.Vec3(0,1,0),m.th*e);m.b.quaternion=r.mult(m.q);});
+    cancelAnimationFrame(raf);raf=0;state="kept";const me=slide={};
+    if(now||reduce){set(1);show();return Promise.resolve();}
+    return new Promise(res=>{const t0=performance.now(),st=n=>{if(slide!==me)return res();const k=Math.max(0,Math.min(1,(n-t0)/380));set(k);show();if(k<1)requestAnimationFrame(st);else res();};requestAnimationFrame(st);});}
+  function fade(i,on){const d=dice[i],u=d.mesh.userData;if(u.faded===on)return;u.faded=on;u.line.visible=!on;
+    [u.outer,u.inner].forEach(m=>{m.material.transparent=on;m.material.opacity=on?.4:1;m.material.needsUpdate=true;m.castShadow=on?false:m===u.outer;});}
+  // estompează zarurile folosite: la dublă, câte un zar după fiecare două mutări
+  function mark(vals,used){if(!layout)return;
+    if(vals.length===4){const n=used.filter(Boolean).length;dice.forEach((d,i)=>fade(i,n>=2*(i+1)));}
+    else{const left=vals.map((v,i)=>({v,u:used[i]}));dice.forEach((d,i)=>{const k=left.findIndex(x=>x.v===readFace(d.body).val);fade(i,k>=0&&!!left.splice(k,1)[0].u);});}
+    if(state==="kept")show();}
+  const parked=()=>!!layout;
   function tick(now){raf=requestAnimationFrame(tick);const dt=Math.min(.05,(now-(last||now))/1000);last=now;
     if(state==="holding"&&hold){const t=now/1000;
       const act=dice.filter(d=>d.active),solo=act.length===1;dice.forEach((d,i)=>{if(!d.active)return;const b=d.body;const tx=hold.tx+(solo?0:(i?.26:-.26))+Math.sin(t*9+i*2)*.05,tz=hold.tz+Math.cos(t*8+i)*.05,ty=1.4+Math.sin(t*7+i)*.06;
@@ -1734,9 +1758,9 @@ const DICE3D=(()=>{
   function finish(vals){state="done";hint.innerHTML=opts.labels?vals.map((v,i)=>`${opts.labels[i]}: <b>${v}</b>`).join(" · "):`<b>${vals.join(" · ")}</b>`;
     const res=()=>{const f=resolveFn;resolveFn=null;f&&f(vals);};
     if(opts.keep){setTimeout(()=>{host.classList.add("passive");state="kept";res();},opts.side==="bot"?120:220);return;}
-    setTimeout(()=>{host.classList.add("out");setTimeout(()=>{host.hidden=true;host.classList.remove("out");cancelAnimationFrame(raf);raf=0;state="idle";res();},200);},opts.side==="bot"?250:450);}
-  let clrT=0;function clear(){if(!built||host.hidden)return;host.classList.add("out");clearTimeout(clrT);clrT=setTimeout(()=>{host.hidden=true;host.classList.remove("out","passive");if(state==="kept")state="idle";},200);}
-  function throwDice(o){if(lost)return Promise.resolve(Array.from({length:(o.slots||[0,1]).length},rollDie));if(!built)build();clearTimeout(clrT);opts=o;host.classList.remove("passive","out");host.hidden=false;size();
+    setTimeout(async()=>{if(!resolveFn)return;await park(opts.park||"you");res();},opts.side==="bot"?200:350);}
+  let clrT=0;function clear(){layout=null;slide=null;if(!built||host.hidden)return;host.classList.add("out");clearTimeout(clrT);clrT=setTimeout(()=>{host.hidden=true;host.classList.remove("out","passive");if(state==="kept")state="idle";},200);}
+  function throwDice(o){if(lost)return Promise.resolve(Array.from({length:(o.slots||[0,1]).length},rollDie));if(!built)build();clearTimeout(clrT);layout=null;slide=null;dice.forEach((d,i)=>fade(i,false));opts=o;host.classList.remove("passive","out");host.hidden=false;size();
     const slots=o.slots||[0,1];const tints=o.tints||(o.side==="bot"?["bot","bot"]:["you","you"]);
     dice.forEach((d,i)=>{const on=slots.includes(i);d.active=on;
       if(on){setTint(i,tints[slots.indexOf(i)]||tints[0]);if(!d.inWorld){world.addBody(d.body);d.inWorld=true;}d.mesh.visible=true;}
@@ -1746,7 +1770,7 @@ const DICE3D=(()=>{
     last=0;if(!raf)raf=requestAnimationFrame(tick);
     if(o.auto)setTimeout(()=>autoThrow(o.side),120);
     return new Promise(r=>{resolveFn=r;});}
-  return{available:ok,throwDice,clear};
+  return{available:ok,throwDice,clear,park,mark,parked};
 })();
 
 async function rollPair(o){const use3d=S.dice3d!==false&&DICE3D.available();
@@ -1899,8 +1923,10 @@ function renderJ(){
 function jBoardDraw(extra={}){JM.draw(extra);}
 // ce stă mereu pe tabla de joc: zarurile și pip count-ul (din poziția întreagă, fără piesa ridicată)
 function jBase(){const o={dice:boardDiceOf()};if(S.pipBoard!==false)o.pips=pips(G.pos);return o;}
-function boardDiceOf(){if(G.openDice)return G.openDice.map((v,i)=>({v,used:false,side:i?"opp":"you"}));
-  if(G.dice){const bot=G.turn==="bot",u=bot?[]:JM.used(G.dice);return G.dice.map((v,i)=>({v,used:!!u[i],side:bot?"opp":"you"}));}
+function boardDiceOf(){if(G.phase==="over")return[];
+  if(G.openDice)return DICE3D.parked()?[]:G.openDice.map((v,i)=>({v,used:false,side:i?"opp":"you"}));
+  if(G.dice){const bot=G.turn==="bot",u=bot?[]:JM.used(G.dice);if(DICE3D.parked()){DICE3D.mark(G.dice,u);return[];}
+    return G.dice.map((v,i)=>({v,used:!!u[i],side:bot?"opp":"you"}));}
   return(G.lastDice||[]).map(v=>({v,used:true,side:"opp"}));}
 const BULB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
 function hintBtn(){const ok=GNU.status()==="ready",dis=!ok||G.steps.length===G.max||(G.hints<=0&&!G.turnHinted),t=ok?`Hint (${G.hints} rămase)`:"Hint indisponibil";
@@ -1923,12 +1949,12 @@ async function openingRoll(){if(G.busy)return;G.busy=true;hideTap();jEl("jCtl").
   if(d3){[a]=await DICE3D.throwDice({keep:true,side:"you",auto:S.autoRoll===true,slots:[0],tints:["you"],labels:[LA],text:S.autoRoll===true?"":two?`Aruncă, ${PN[1]}`:"Aruncă zarul tău"});if(tok!==G.gameTok)return;
     setStatus(two?`${PN[1]} a dat <b>${a}</b>. Acum aruncă ${PN[2]}.`:`Ai dat <b>${a}</b>. Acum aruncă botul…`);
     [b]=await DICE3D.throwDice(two?{keep:true,side:S.fixedBoard===true?"bot":"you",auto:S.autoRoll===true,slots:[1],tints:["bot"],keepOthers:true,labels:[LB],text:S.autoRoll===true?"":`Aruncă, ${PN[2]}`}:{keep:true,side:"bot",auto:true,slots:[1],tints:["bot"],keepOthers:true,labels:["Bot"]});if(tok!==G.gameTok)return;
-    DICE3D.clear();}
+    await DICE3D.park("split");if(tok!==G.gameTok)return;}
   else{SFX.roll();a=rollDie();await new Promise(r=>setTimeout(r,250));b=rollDie();if(tok!==G.gameTok)return;}
   G.busy=false;G.openDice=[a,b];renderJ();jBoardDraw();
   if(a===b){setStatus(`Egalitate (${a}-${b}). Mai aruncați o dată.`);offerRoll(1100);return;}
   G.phase="wait";jEl("jCtl").innerHTML="";
-  setTimeout(()=>{if(tok!==G.gameTok)return;
+  setTimeout(()=>{if(tok!==G.gameTok)return;if(DICE3D.parked())DICE3D.park(two||a>b?"you":"opp");
     if(two){const w=a>b?1:2;if(w===2){G.cur=2;G.pos=mirrorPos(G.pos);setView();}setStatus(`<b>Începe ${PN[w]}</b> cu ${Math.max(a,b)}-${Math.min(a,b)}.`);startYourTurn(w===1?[a,b]:[b,a]);return;}
     if(a>b){setStatus(`Tu ai dat ${a}, botul ${b}. <b>Începi tu</b> cu ${a}-${b}.`);startYourTurn([a,b]);}
     else{setStatus(`Botul a dat ${b}, tu ${a}. <b>Începe botul</b> cu ${b}-${a}.`);botTurn([b,a]);}},900);}
@@ -1948,7 +1974,7 @@ function nextPlayer(){const tok=G.gameTok;if(G.phase==="over")return;
   setStatus(`Rândul lui <b>${PN[G.cur]}</b>.`);if(tok===G.gameTok)offerRoll(250);}
 const JM=makeMover({S:G,svg:"jBoard",wrap:"jWrap",active:()=>G.phase==="move",onChange:renderJ,base:jBase,extra:hintOpt,
   onComplete:()=>{if(S.autoOk!==false)setTimeout(()=>{if(G.phase==="move"&&G.steps.length===G.max&&!G.anim)confirmMove();},280);}});
-function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
+function confirmMove(){if(G.steps.length!==G.max)return;
   const d=G.dice.length===4?[G.dice[0],G.dice[0]]:G.dice;const x0=ENG.canonFor(G.turnStart,"you");
   const opts=ENG.unique(x0,G.seqs).map(o=>Object.assign(o,{p:ENG.evalMover(o.res)})).sort((a,b)=>b.p-a.p);
   const mine=ENG.apply(x0,G.steps),myKey=ENG.key(mine),myP=ENG.evalMover(mine);
@@ -1979,7 +2005,7 @@ function confirmMove(){if(G.steps.length!==G.max)return;DICE3D.clear();
 function showMoveBadge(h){const c=h.cls;
   jEl("jFb").innerHTML=`<div class="mvbadge" style="--c:${c.col}"><span class="mvsym">${c.sym}</span><div><b>${c.ro}</b><span class="mono">${h.not}</span>${h.loss>0.5&&c.id!=="forced"?`<small>Mai bună: <span class="mono">${h.bestNot}</span></small>`:""}</div></div>`;}
 async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";G.dice=G.openDice=null;renderJ();jBoardDraw();
-  if(!d){d=await rollPair({side:"bot",auto:true});if(tok!==G.gameTok)return;}
+  if(!d){d=await rollPair({side:"bot",park:"opp",auto:true});if(tok!==G.gameTok)return;}
   setTimeout(async()=>{if(tok!==G.gameTok)return;G.dice=d[0]===d[1]?[d[0],d[0],d[0],d[0]]:d;renderJ();jBoardDraw();
     const x=ENG.canonFor(G.pos,"bot");let seq=null,p=null,pGnu=false;
     if((G.level==="greu"||G.level==="expert")&&GNU.status()==="ready"){setStatus("Botul se gândește (GNU)…");const list=await gnuAnalyze(G.pos,"bot",d[0],d[1]);
@@ -1989,8 +2015,8 @@ async function botTurn(d){const tok=G.gameTok;G.turn="bot";G.phase="bot";G.dice=
       if(book){seq=book.best;p=ENG.evalMover(ENG.apply(x,seq));}else{const ch=ENG.choose(x,d[0],d[1],G.level);seq=ch.pick.seq;p=ch.pick.p;}}
     const before=clone(G.pos);const not=fmtSeq(x,seq,true);
     setStatus(seq.length?`Botul are ${d[0]}-${d[1]}: <span class="mono">${not}</span>`:`Botul are ${d[0]}-${d[1]} și nu poate muta.`);
-    const fin=()=>{if(tok!==G.gameTok)return;DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});if(pGnu){++G.evalTok;setEval(1-p);}else evalAfter(before,"bot",d,ENG.key(ENG.apply(x,seq)),p);logRender();
-      if(checkOver())return;G.phase="roll";G.lastDice=G.dice;G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
+    const fin=()=>{if(tok!==G.gameTok)return;const in3d=DICE3D.parked();DICE3D.clear();G.pos=fromCanon(ENG.apply(x,seq),"bot");G.lastMv=[...new Set(toAnim(seq,"bot").map(m=>m[2]).filter(t=>t>=1&&t<=24))];G.hist.push({who:"bot",dice:d,before,seq,not});if(pGnu){++G.evalTok;setEval(1-p);}else evalAfter(before,"bot",d,ENG.key(ENG.apply(x,seq)),p);logRender();
+      if(checkOver())return;G.phase="roll";G.lastDice=in3d?null:G.dice;G.dice=null;renderJ();jBoardDraw();setStatus("Rândul tău.");offerRoll(150);};
     if(seq.length)setTimeout(()=>animJ(G.pos,toAnim(seq,"bot"),fin),150);else setTimeout(fin,700);
   },150);}
 // marț tehnic / linie tehnică: câte 2 (resp. 1) piese pe fiecare punct din casă, restul scoase = câștig pe loc
@@ -2098,7 +2124,7 @@ function checkOver(){const tY=techWin(G.pos,"you"),tB=tY?null:techWin(G.pos,"bot
   const you=G.pos.pOff===15||!!tY,bot=G.pos.oOff===15||!!tB;if(!you&&!bot)return false;
   let pts=1;if(tech)pts=tech.pts;else if(you){if(G.pos.oOff===0){pts=2;let bg=G.pos.oBar>0;for(let i=1;i<=6;i++)if(G.pos.o[i])bg=true;if(bg)pts=3;}}
   else{if(G.pos.pOff===0){pts=2;let bg=G.pos.pBar>0;for(let i=19;i<=24;i++)if(G.pos.p[i])bg=true;if(bg)pts=3;}}
-  G.over={win:you,pts};G.phase="over";renderJ();++G.evalTok;
+  G.over={win:you,pts};G.phase="over";DICE3D.clear();renderJ();++G.evalTok;
   if(G.two){const w=you?G.cur:3-G.cur;setEval(w===1?1:0);G.over.pl=w;
     const k2=tech?(tech.pts===3?"mt":"lt"):pts===3?"bg":pts===2?"mart":"win",n2={mt:"Marț tehnic",lt:"Linie tehnică",bg:"Backgammon",mart:"Marț",win:`Câștigă ${PN[w]}`}[k2],pw2=pts===1?"1 punct":pts+" puncte";
     END.play(you?k2:"lose",n2,k2==="win"?pw2:`${PN[w]} · ${pw2}`,pts,you);
